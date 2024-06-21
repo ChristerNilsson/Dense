@@ -84,7 +84,7 @@ assert false, 2 > 12
 
 XMAX = 2000
 XMIN = 1000
-normera = (x) -> (1000*(XMAX-x) + 2000*(x-XMIN)) / (XMAX - XMIN)
+normera = (x) -> x # (1000*(XMAX-x) + 2000*(x-XMIN)) / (XMAX - XMIN)
 
 class Player
 	constructor : (@id, @elo="",  @opp=[], @col="", @res="",@name="") ->
@@ -92,9 +92,7 @@ class Player
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
 
 	eloSum : -> 
-		sp = tournament.sp
-		hash = {'w2': 1, 'b2': 1+2*sp, 'w1': 0.5-sp, 'b1': 0.5+sp, 'w0': 0, 'b0': 0}
-		sum(normera(tournament.persons[@opp[i]].elo) * hash[@col[i] + @res[i]] for i in range @res.length)
+		sum(normera(tournament.persons[@opp[i]].elo) * tournament.bonus[@col[i] + @res[i]] for i in range @res.length)
 
 	avgEloDiff : ->
 		res = []
@@ -168,6 +166,8 @@ class Tournament
 		@robin = range N
 		@fetchURL()
 		@mat = []
+
+		@bonus = {'w2': 1, 'b2': 1+2*@sp, 'w1': 0.5-@sp, 'b1': 0.5+@sp, 'w0': 0, 'b0': 0}
 
 	write : () ->
 
@@ -278,6 +278,7 @@ class Tournament
 		xdraw()
 
 	fetchURL : (url = location.search) ->
+		if url == '' then window.location.href = "https://github.com/ChristerNilsson/Dense/blob/main/README.md"
 		print 'fetchURL'
 		print url
 		getParam = (name,def) ->
@@ -469,6 +470,7 @@ class Tournament
 		for r in range @round
 			header += @txtT "#{r+1}",6,window.RIGHT
 		header += '  ' + @txtT "EloSum", 8,window.RIGHT
+		header += '  ' + @txtT "Explanation", 12,window.LEFT
 		
 		for person,i in temp
 			if i % @ppp == 0 then res.push header
@@ -481,7 +483,13 @@ class Tournament
 			for r in range @round
 				s += @txtT "#{1+inv[person.opp[r]]}#{RINGS[person.col[r][0]]}#{"0½1"[person.res[r]]}", 6, window.RIGHT			
 			s += ' ' + @txtT person.eloSum().toFixed(1),  8, window.RIGHT
-			res.push s
+			terms = []
+			for r in range @round
+				key = person.col[r][0]+person.res[r]
+				elo = @persons[person.opp[r]].elo
+				terms.push "#{@bonus[key]} * #{elo}"
+			s += '  (' + terms.join(' + ') + ')'
+			res.push s 
 			if i % @ppp == @ppp-1 then res.push "\f"
 		res.push "\f"
 

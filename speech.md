@@ -1,13 +1,5 @@
 # Dense Pairings - ett alternativ till Swiss ?
 
-Föreläsning för Senior Stockholm 2024 av Christer Nilsson
-
-## Bakgrund
-
-* Civ Ing Data Linköping 1981
-* Monradprogram för MS-DOS utv i Turbo Pascal ca 1990 (ref Jonas Sandbom)
-* Bildbanken 2.0 2024 (ref Lars OA Hedlund)
-
 ## Historik
 
 * Swiss skapades 1895 av Dr. Julius Müller (1857-1917) i Zürich.
