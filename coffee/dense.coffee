@@ -1,5 +1,5 @@
 import { parseExpr } from './parser.js'
-import {Edmonds} from './mattkrick.js' 
+import { Edmonds } from './mattkrick.js' 
 
 # parameters that somewhat affects matching
 COST = 'QUADRATIC' # QUADRATIC=1.01 or LINEAR=1
@@ -157,6 +157,7 @@ class Tournament
 		@sp = 0.0 # 0.01
 		@tpp = 30
 		@ppp = 60
+		@expl = 3
 
 		# dessa tre listor pekar på samma objekt
 		@players = []
@@ -292,7 +293,7 @@ class Tournament
 		@datum = urlParams.get('DATE') or ""
 		@rounds = parseInt urlParams.get 'ROUNDS'
 		@round = parseInt urlParams.get 'ROUND'
-
+		@expl = parseInt getParam 'EXPL', 3
 		@first = getParam 'FIRST','bw' # Determines if first player has white or black in the first round
 		@sp = parseFloat getParam 'SP', 0.0 # ScorePoints
 		@tpp = parseInt getParam 'TPP',30 # Tables Per Page
@@ -470,7 +471,7 @@ class Tournament
 		for r in range @round
 			header += @txtT "#{r+1}",6,window.RIGHT
 		header += '  ' + @txtT "EloSum", 8,window.RIGHT
-		header += '  ' + @txtT "Explanation", 12,window.LEFT
+		if @expl > 0 then header += '  ' + @txtT "Explanation", 12,window.LEFT
 		
 		for person,i in temp
 			if i % @ppp == 0 then res.push header
@@ -485,10 +486,11 @@ class Tournament
 			s += ' ' + @txtT person.eloSum().toFixed(1),  8, window.RIGHT
 			terms = []
 			for r in range @round
-				key = person.col[r][0]+person.res[r]
-				elo = @persons[person.opp[r]].elo
-				terms.push "#{@bonus[key]} * #{elo}"
-			s += '  (' + terms.join(' + ') + ')'
+				if r < @expl
+					key = person.col[r][0]+person.res[r]
+					elo = @persons[person.opp[r]].elo
+					terms.push "#{@bonus[key]} * #{elo}"
+			if r < @expl then s += '  (' + terms.join(' + ') + ')'
 			res.push s 
 			if i % @ppp == @ppp-1 then res.push "\f"
 		res.push "\f"
