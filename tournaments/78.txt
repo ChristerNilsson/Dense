@@ -1,4 +1,5 @@
-127.0.0.1:5500?TOUR=Tyresö_Open_2024
+https://christernilsson.github.io/Dense
+?TOUR=Tyresö_Open_2024
 &DATE=2024-05-03
 &ROUNDS=8
 &ROUND=0
