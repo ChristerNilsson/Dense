@@ -375,7 +375,7 @@ class Tournament
 		@showHeader 'Tables'
 		y = 1.5 * ZOOM[state]
 		s = ""
-		s +=       @txtT '#', 2,window.RIGHT
+		s +=       @txtT '#', 3,window.RIGHT
 		# s += ' ' + @txtT 'Score', 5,window.RIGHT
 		s += ' ' + @txtT 'Elo',   4,window.RIGHT
 		s += ' ' + @txtT 'White', 25,window.LEFT
@@ -398,7 +398,7 @@ class Tournament
 
 			nr = i+1
 			s = ""
-			s += @txtT nr.toString(), 2, window.RIGHT
+			s += @txtT nr.toString(), 3, window.RIGHT
 			# s += ' ' + @txtT pa, 5
 			s += ' ' + @txtT a.elo.toString(), 4, window.RIGHT
 			s += ' ' + @txtT a.name, 25, window.LEFT
@@ -497,29 +497,19 @@ class Tournament
 		res.push "\f"
 
 	makeNames : (header,players,res) -> # players sorterad på namn
-		print 'makeNames',players
 		temp = _.clone players
 		temp.sort (a,b) -> b[0].eloSum() - a[0].eloSum()
 
 		for p,i in temp
-			p[0].position = i
-
-		for p,i in players
-			if p[0].eloSum() > 0
-				print p[0].name, 1+p[0].position
-			else
-				print p[0].name
-
-
-
-
+			p[0].position = ""
+			if p[0].eloSum() > 0 then p[0].position = "##{i+1}"
 
 		res.push "NAMES" + header
 		res.push ""
 		r = tournament.round
 		for p,i in players
 			if i % @ppp == 0 then res.push "Table Name"
-			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{}" 
+			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{p[0].position}" 
 			if i % @ppp == @ppp-1 then res.push "\f"
 		res.push "\f"
 
@@ -608,6 +598,7 @@ class Tournament
 		@drawMatrix @title, matrix
 
 	showStandings : ->
+
 		@showHeader 'Standings'
 		if @pairs.length == 0
 			txt "This ROUND can't be paired! (Too many rounds)",width/2,height/2,CENTER
@@ -629,8 +620,7 @@ class Tournament
 		rheader = _.map range(1,@rounds+1), (i) -> "#{i%10} "
 		rheader = rheader.join ' '
 		s = ""
-		s +=       @txtT "#",    2
-		# s += ' ' + @txtT "Id",   4,window.RIGHT
+		s +=       @txtT "#",    3,window.RIGHT
 		s += ' ' + @txtT "Elo",  4,window.RIGHT
 		s += ' ' + @txtT "Name", 25,window.LEFT
 		s += ' ' + @txtT rheader,3*@rounds,window.LEFT 
@@ -641,8 +631,7 @@ class Tournament
 		for person,i in temp
 			y += ZOOM[state] * 0.5
 			s = ""
-			s +=       @txtT (1+i).toString(),         2, window.RIGHT
-			# s += ' ' + @txtT (inv[person.id]).toString(), 4, window.RIGHT
+			s +=       @txtT (1+i).toString(),         3, window.RIGHT
 			s += ' ' + @txtT person.elo.toString(),    4, window.RIGHT
 			s += ' ' + @txtT person.name,             25, window.LEFT
 			s += ' ' + @txtT '',               3*@rounds, window.CENTER
@@ -727,7 +716,7 @@ showHelp = ->
 		text HELP[i],100,50+50*i
 
 window.windowResized = -> 
-	resizeCanvas windowWidth-4,1650 #windowHeight-4
+	resizeCanvas windowWidth-4, N * ZOOM # 1650 #windowHeight-4
 	xdraw()
 
 window.setup = ->
@@ -742,6 +731,7 @@ window.setup = ->
 xdraw = ->
 	background 'gray'
 	textSize ZOOM[state] * 0.5
+
 	if state == 0 then tournament.showTables()
 	if state == 1 then tournament.showStandings()
 	if state == 2 then tournament.showHelp()
@@ -803,7 +793,15 @@ handleDelete = (pa,pb) ->
 		pb.res = pb.res.substring 0,pb.res.length-1
 	currentTable = (currentTable + 1) %% (N//2)
 
+window.mousePressed = (event) ->
+	if state == 0
+		currentTable = int mouseY / (0.5 * ZOOM[state]) - 3.5
+		xdraw()
+
 window.keyPressed = (event) ->
+
+	# if not keyIsPressed then return 
+
 	# print key
 	if key == 'Home' then currentTable = 0
 	if key == 'End' then currentTable = (N//2) - 1
@@ -823,14 +821,25 @@ window.keyPressed = (event) ->
 	pa = tournament.persons[a]
 	pb = tournament.persons[b]
 
-	if key in '0 1' then handleResult a,b,pa,pb,key
-	if key == 'Enter' then state = 1 - state
+	if key in '0 1' 
+		handleResult a,b,pa,pb,key
+		event.preventDefault()
+
+	if key == 'Enter'
+		state = 1 - state
+		if state == 0 then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
+		if state == 1 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
+		
+
 	if key in 'pP' then tournament.lotta()
 
 	if key in 'l' then ZOOM[state] += 1
 	if key in 's' then ZOOM[state] -= 1
 	if key in 'L' then ZOOM[state] += 4
 	if key in 'S' then ZOOM[state] -= 4
+	if key in 'lsLS'
+		if state == 0 then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
+		if state == 1 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
 
 	if key == 'x' then fakeInput()
 	if key == 'Delete' then handleDelete pa,pb
