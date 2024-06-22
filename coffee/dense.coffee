@@ -361,8 +361,8 @@ class Tournament
 		textAlign LEFT,CENTER
 		s = ''
 		s += @txtT "#{@title} #{@datum}" ,30, window.LEFT
-		s += ' ' + @txtT header, 22, window.CENTER
-		s += ' ' + @txtT 'Round ' + @round, 30, window.RIGHT
+		s += ' ' + @txtT header, 15, window.CENTER
+		s += ' ' + @txtT 'Round ' + @round, 26, window.RIGHT
 		fill 'black'
 		text s,10,y
 
