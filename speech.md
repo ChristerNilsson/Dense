@@ -1,5 +1,7 @@
 # Dense Pairings - ett alternativ till Swiss ?
 
+ELO Pairings?
+
 ## Historik
 
 * Swiss skapades 1895 av Dr. Julius Müller (1857-1917) i Zürich.
