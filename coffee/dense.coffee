@@ -91,8 +91,7 @@ class Player
 
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
 
-	eloSum : -> 
-		sum(normera(tournament.persons[@opp[i]].elo) * tournament.bonus[@col[i] + @res[i]] for i in range @res.length)
+	eloSum : -> sum(normera(tournament.persons[@opp[i]].elo) * tournament.bonus[@col[i] + @res[i]] for i in range @res.length)
 
 	avgEloDiff : ->
 		res = []
@@ -294,6 +293,7 @@ class Tournament
 		@rounds = parseInt urlParams.get 'ROUNDS'
 		@round = parseInt urlParams.get 'ROUND'
 		@expl = parseInt getParam 'EXPL', 3
+		print 'expl',@expl
 		@first = getParam 'FIRST','bw' # Determines if first player has white or black in the first round
 		@sp = parseFloat getParam 'SP', 0.0 # ScorePoints
 		@tpp = parseInt getParam 'TPP',30 # Tables Per Page
@@ -471,7 +471,7 @@ class Tournament
 		for r in range @round
 			header += @txtT "#{r+1}",6,window.RIGHT
 		header += '  ' + @txtT "EloSum", 8,window.RIGHT
-		if @expl > 0 then header += '  ' + @txtT "Explanation", 12,window.LEFT
+		if @round <= @expl then header += '  ' + @txtT "Explanation", 12,window.LEFT
 		
 		for person,i in temp
 			if i % @ppp == 0 then res.push header
@@ -485,23 +485,41 @@ class Tournament
 				s += @txtT "#{1+inv[person.opp[r]]}#{RINGS[person.col[r][0]]}#{"0½1"[person.res[r]]}", 6, window.RIGHT			
 			s += ' ' + @txtT person.eloSum().toFixed(1),  8, window.RIGHT
 			terms = []
-			for r in range @round
-				if r < @expl
+			print @round,@expl,@round < @expl
+			if @round <= @expl
+				for r in range @round
 					key = person.col[r][0]+person.res[r]
 					elo = @persons[person.opp[r]].elo
 					terms.push "#{@bonus[key]} * #{elo}"
-			if r < @expl then s += '  (' + terms.join(' + ') + ')'
+				s += '  (' + terms.join(' + ') + ')'
 			res.push s 
 			if i % @ppp == @ppp-1 then res.push "\f"
 		res.push "\f"
 
-	makeNames : (header,players,res) ->
+	makeNames : (header,players,res) -> # players sorterad på namn
+		print 'makeNames',players
+		temp = _.clone players
+		temp.sort (a,b) -> b[0].eloSum() - a[0].eloSum()
+
+		for p,i in temp
+			p[0].position = i
+
+		for p,i in players
+			if p[0].eloSum() > 0
+				print p[0].name, 1+p[0].position
+			else
+				print p[0].name
+
+
+
+
+
 		res.push "NAMES" + header
 		res.push ""
 		r = tournament.round
 		for p,i in players
 			if i % @ppp == 0 then res.push "Table Name"
-			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name}" #  (#{initial p[0].name})"
+			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{}" 
 			if i % @ppp == @ppp-1 then res.push "\f"
 		res.push "\f"
 
