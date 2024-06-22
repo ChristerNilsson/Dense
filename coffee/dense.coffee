@@ -8,28 +8,26 @@ COLORS = 1 # 1 or 2
 
 RINGS = {'b':'•', 'w':'o'}
 
-HELP = """
-How to use Dense Pairings:
-	Enter = Switch between Tables and Result
-	Home = Select First Table
-	Up   = Select Previous Table
-	Down = Select Next Table
-	End  = Select Last Table
-	0 = Enter a Loss for White Player
-	space = Enter a Draw
-	1 = Enter a Win for White Player
-	Delete = Remove erroneous result
-	P = Perform Pairing
-	S = Make text smaller
-	L = Make text larger
-	? = Show this Help Page
-	H = Show Help for constructing the URL
-""".split '\n'
+# HELP = """
+# How to use Dense Pairings:
+# 	Enter = Switch between Tables and Result
+# 	Home = Select First Table
+# 	Up   = Select Previous Table
+# 	Down = Select Next Table
+# 	End  = Select Last Table
+# 	0 = Enter a Loss for White Player
+# 	space = Enter a Draw
+# 	1 = Enter a Win for White Player
+# 	Delete = Remove erroneous result
+# 	P = Perform Pairing
+# 	S = Make text smaller
+# 	L = Make text larger
+# 	? = Show this Help Page
+# 	H = Show Help for constructing the URL
+# """.split '\n'
 
 print = console.log
 range = _.range
-
-# up down  enter  1 space=draw 0  delete  Pair  Small Large  Matrix
 
 ASCII = '0123456789abcdefg'
 ALFABET = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' # 62 ronder maximalt
@@ -288,7 +286,7 @@ class Tournament
 
 		urlParams = new URLSearchParams url
 		@players = []
-		@title = urlParams.get('TOUR').replace '_',' '
+		@title = urlParams.get('TOUR').replaceAll '_',' '
 		@datum = urlParams.get('DATE') or ""
 		@rounds = parseInt urlParams.get 'ROUNDS'
 		@round = parseInt urlParams.get 'ROUND'
@@ -356,15 +354,18 @@ class Tournament
 		res
 	#assert "   Sven   ", txtT "Sven",10
 
-	showHeader : (header) ->
+	showHeader : (header,round) ->
 		y = ZOOM[state]/2
 		textAlign LEFT,CENTER
 		s = ''
 		s += @txtT "#{@title} #{@datum}" ,30, window.LEFT
 		s += ' ' + @txtT header, 15, window.CENTER
-		s += ' ' + @txtT 'Round ' + @round, 26, window.RIGHT
-		fill 'black'
+		s += ' ' + @txtT 'Round ' + round, 26, window.RIGHT
 		text s,10,y
+
+	showFooter : (y,footer) -> 
+		s = @txtT footer, 72
+		text s, 10, (3 + y) * 0.5 * ZOOM[state]
 
 	txt : (value, x, y, align=null, color=null) ->
 		if align then textAlign align,CENTER
@@ -372,18 +373,18 @@ class Tournament
 		text value,x,y
 
 	showTables : ->
-		@showHeader 'Tables'
-		y = 1.5 * ZOOM[state]
+		fill 'white'
+		@showHeader 'Tables',@round
+		@showFooter N//2, "Keys: 1 space=½ 0 delete  Pair  W=larger S=smaller font  enter=standings"
+
+		y = 1.0 * ZOOM[state]
 		s = ""
 		s +=       @txtT '#', 3,window.RIGHT
-		# s += ' ' + @txtT 'Score', 5,window.RIGHT
 		s += ' ' + @txtT 'Elo',   4,window.RIGHT
 		s += ' ' + @txtT 'White', 25,window.LEFT
 		s += ' ' + @txtT 'Result',7,window.CENTER
 		s += ' ' + @txtT 'Black', 25,window.LEFT
 		s += ' ' + @txtT 'Elo',   4,window.LEFT
-		# s += ' ' + @txtT 'Score', 5,window.RIGHT
-		fill 'black'
 		textAlign window.LEFT
 		text s,10,y
 
@@ -399,15 +400,11 @@ class Tournament
 			nr = i+1
 			s = ""
 			s += @txtT nr.toString(), 3, window.RIGHT
-			# s += ' ' + @txtT pa, 5
 			s += ' ' + @txtT a.elo.toString(), 4, window.RIGHT
 			s += ' ' + @txtT a.name, 25, window.LEFT
-
 			s += ' ' + @txtT both,7, window.CENTER
-
 			s += ' ' + @txtT b.name, 25, window.LEFT
 			s += ' ' + @txtT b.elo.toString(), 4, window.RIGHT
-			# s += ' ' + @txtT pb, 5, window.CENTER
 
 			if i == currentTable
 				fill  'yellow'
@@ -599,7 +596,9 @@ class Tournament
 
 	showStandings : ->
 
-		@showHeader 'Standings'
+		@showHeader 'Standings',@round-1
+		@showFooter N, "Keys: W=larger S=smaller font  enter=tables"
+
 		if @pairs.length == 0
 			txt "This ROUND can't be paired! (Too many rounds)",width/2,height/2,CENTER
 			return
@@ -615,7 +614,7 @@ class Tournament
 
 		inv = invert (p.id for p in temp)
 
-		y = 1.5 * ZOOM[state] + currentResult
+		y = 1.0 * ZOOM[state] + currentResult
 		textAlign LEFT
 		rheader = _.map range(1,@rounds+1), (i) -> "#{i%10} "
 		rheader = rheader.join ' '
@@ -710,10 +709,10 @@ assert [0,1,2,3], invert [0,1,2,3]
 assert [3,2,0,1], invert [2,3,1,0]
 assert [2,3,1,0], invert invert [2,3,1,0]
 
-showHelp = ->
-	textAlign LEFT
-	for i in range HELP.length
-		text HELP[i],100,50+50*i
+# showHelp = ->
+# 	textAlign LEFT
+# 	for i in range HELP.length
+# 		text HELP[i],100,50+50*i
 
 window.windowResized = -> 
 	resizeCanvas windowWidth-4, N * ZOOM # 1650 #windowHeight-4
@@ -734,7 +733,7 @@ xdraw = ->
 
 	if state == 0 then tournament.showTables()
 	if state == 1 then tournament.showStandings()
-	if state == 2 then tournament.showHelp()
+	# if state == 2 then tournament.showHelp()
 
 elo_probabilities = (R_W, R_B, draw=0.2) ->
 	E_W = 1 / (1 + 10 ** ((R_B - R_W) / 400))
@@ -795,7 +794,7 @@ handleDelete = (pa,pb) ->
 
 window.mousePressed = (event) ->
 	if state == 0
-		currentTable = int mouseY / (0.5 * ZOOM[state]) - 3.5
+		currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
 		xdraw()
 
 window.keyPressed = (event) ->
