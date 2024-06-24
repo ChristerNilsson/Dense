@@ -6,7 +6,7 @@ COST = 'QUADRATIC' # QUADRATIC=1.01 or LINEAR=1
 DIFF = 'ID' # ID or ELO
 COLORS = 1 # 1 or 2
 
-RINGS = {'b':'•', 'w':'o'}
+RINGS = {'b':'•', ' ':' ', 'w':'o'}
 
 print = console.log
 range = _.range
@@ -70,6 +70,12 @@ normera = (x) -> x # (1000*(XMAX-x) + 2000*(x-XMIN)) / (XMAX - XMIN)
 class Player
 	constructor : (@id, @elo="",  @opp=[], @col="", @res="",@name="") -> @active = true
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
+
+	toggle : -> 
+		@active = not @active
+		print 'toggle1',tournament.persons
+		tournament.paused = (p.id for p in tournament.persons when not p.active)
+		print 'toggle2',tournament.paused
 
 	eloSum : -> 
 		summa = 0
@@ -204,10 +210,15 @@ class Tournament
 	lotta : () ->
 
 		#print @players
+
 		for p in @persons
-			if p.res.length != p.col.length
-				print 'avbrutet!'
-				return
+			if not p.active
+				if p.res.length < p.col.length
+					p.res += '0'
+
+				# if p.res.length != p.col.length
+					# print 'avbrutet!'
+				# return
 
 		print 'Lottning av rond ',@round
 		document.title = 'Round ' + (@round+1)
@@ -230,7 +241,7 @@ class Tournament
 		for p in @persons
 			if p.active then continue
 			p.opp.push -1
-			p.res += '0'
+			# p.res += '0'
 			p.col += ' '
 
 		for [a,b] in @pairs
@@ -264,6 +275,8 @@ class Tournament
 			pb = @persons[b]
 			pa.chair = 2*i
 			pb.chair = 2*i + 1
+
+		print 'yyy',@persons
 
 		downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
 		start = new Date()
@@ -316,7 +329,7 @@ class Tournament
 			player.read players[i]
 			@persons.push player
 
-		@paused = urlParams.get 'PAUSED' # list of zero based ids
+		@paused = getParam 'PAUSED','()' # list of zero based ids
 		@paused = parseExpr @paused
 		for id in @paused
 			@persons[id].active = false
@@ -374,11 +387,15 @@ class Tournament
 		text value,x,y
 
 	showNames : ->
-		if @round == 0 then return
-		print 'showNames'
+		# if @round == 0 then return
+		# print 'showNames'
+
 		fill 'white'
 		@showHeader 'Names',@round
-		@showFooter N, "W=larger S=smaller tab=tables enter=standings"
+		if @round == 0
+			@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller"
+		else
+			@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller  tab=tables enter=standings"
 
 		y = 1.0 * ZOOM[state]
 		s = ""
@@ -397,24 +414,35 @@ class Tournament
 			if p.eloSum() > 0 then p.position = "#{i+1}"
 
 		fill 'black'
-		r = tournament.round-1
-		for p in @playersByName
+		r = tournament.round - 1
+		for p,i in @playersByName
 			y += ZOOM[state] * 0.5
 			s = ""
-			if p.active
-				s += @txtT (1 + p.chair//2).toString(), 3, window.RIGHT
-				s += @txtT RINGS[p.col[r][0]],          3, window.CENTER
+			if tournament.round == 0
+				s += if p.active then '      ' else ' paus '
 				s += @txtT p.name,                     25, window.LEFT
-				s += @txtT p.position.toString(),       4, window.RIGHT
 			else
-				s += '      '
-				s += @txtT p.name,                     25, window.LEFT
+				if p.active
+					s += @txtT (1 + p.chair//2).toString(), 3, window.RIGHT
+					s += @txtT RINGS[p.col[r][0]],          3, window.CENTER
+					s += @txtT p.name,                     25, window.LEFT
+					s += @txtT p.position.toString(),       4, window.RIGHT
+				else
+					s += '      '
+					s += @txtT p.name,                     25, window.LEFT
+
+			if i == currentPlayer
+				fill  'yellow'
+				noStroke()
+				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
+				fill 'black'
+
 			text s,10,y
 
 	showTables : ->
 		fill 'white'
 		@showHeader 'Tables',@round
-		@showFooter N//2, "1 space=½ 0 delete Pair W=large S=small tab=standings enter=names"
+		@showFooter tournament.pairs.length, "1 space=½ 0 delete Pair W=large S=small tab=standings enter=names"
 
 		y = 1.0 * ZOOM[state]
 		s = ""
@@ -649,7 +677,7 @@ class Tournament
 		@showFooter N, "W=larger S=smaller tab=names enter=tables"
 
 		if @pairs.length == 0
-			txt "This ROUND can't be paired! (Too many rounds)",width/2,height/2,CENTER
+			print "This ROUND can't be paired! (Too many rounds)"
 			return
 
 		playersByEloSum = _.clone @persons
@@ -743,8 +771,8 @@ window.setup = ->
 	textFont 'Courier New'
 	textAlign CENTER,CENTER
 	tournament = new Tournament()
-	#tournament.lotta()
-	state = 0
+	# tournament.lotta()
+	state = 2
 	window.windowResized()
 
 xdraw = ->
@@ -774,29 +802,22 @@ handleResult = (a,b,pa,pb,key) ->
 	else
 		if pa.res.length < pa.col.length then pa.res += "012"[index]
 		if pb.res.length < pb.col.length then pb.res += "210"[index]
-	currentTable = (currentTable + 1) %% (N//2)
+	currentTable = (currentTable + 1) %% tournament.pairs.length
 
 fakeInput = ->
+	currentTable = 0 
+	print 'fakeInput1',tournament.persons
 	for i in range tournament.pairs.length
 		[a,b] = tournament.pairs[i]
 		pa = tournament.persons[a]
 		pb = tournament.persons[b]
-
-		x = 1
-		if x==0	# Utan slump
-			if abs(pa.elo - pb.elo) <= 5 then res = 1
-			else if pa.elo > pb.elo then res = 2
-			else res = 0
-		else if x==1 # elo_prob
-			res = elo_probabilities pa.elo, pb.elo
-		else if x==2 # ren slump [0.4,0.2,0.4]
-			r = _.random 1, true
-			res = 2
-			if r < 0.6 then res=1
-			if r < 0.4 then res=0
-
+		res = elo_probabilities pa.elo, pb.elo
 		if pa.res.length < pa.col.length then pa.res += "012"[res] 
-		if pb.res.length < pb.col.length then pb.res += "012"[2 - res]
+		if pb.res.length < pb.col.length then pb.res += "210"[res]
+
+	# for p in tournament.persons
+	# 	if not p.active then p.res += '0'
+	print 'fakeInput2',tournament.persons
 
 handleDelete = (pa,pb) ->
 	i = currentTable
@@ -809,11 +830,14 @@ handleDelete = (pa,pb) ->
 
 		pa.res = pa.res.substring 0,pa.res.length-1
 		pb.res = pb.res.substring 0,pb.res.length-1
-	currentTable = (currentTable + 1) %% (N//2)
+	currentTable = (currentTable + 1) %% tournament.pairs.length
 
 window.mousePressed = (event) ->
 	if state == 0
 		currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
+		xdraw()
+	if state == 2
+		currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
 		xdraw()
 
 fixCanvas = (delta) ->
@@ -825,29 +849,44 @@ fixCanvas = (delta) ->
 window.keyPressed = (event) ->
 
 	# print key
+	# print 'round',tournament.round
 
-	if key == 'Home' then currentTable = 0
-	if key == 'End' then currentTable = (N//2) - 1
+	if state == 0 and tournament.round > 0 # Tables
+		if key == 'Home' then currentTable = 0
+		if key == 'End' then currentTable = tournament.pairs.length - 1
+		if key == 'ArrowUp' 
+			currentTable = (currentTable - 1) %% tournament.pairs.length
+			event.preventDefault()
+		if key == 'ArrowDown'
+			currentTable = (currentTable + 1) %% tournament.pairs.length
+			event.preventDefault()
+		if key in 'pP' then tournament.lotta()
+		if key == 'x' then fakeInput()
+		print 'currentTable',currentTable
+		if 0 <= currentTable < tournament.pairs.length
+			[a,b] = tournament.pairs[currentTable]
+			pa = tournament.persons[a]
+			pb = tournament.persons[b]
+			if key in '0 1' then handleResult a,b,pa,pb,key
+			if key == 'Delete' then handleDelete pa,pb
+	
+	#if state == 1 # Standings
 
-	if key == 'ArrowUp' 
-		currentTable = (currentTable - 1) %% (N//2)
-		event.preventDefault()
-	if key == 'ArrowDown'
-		currentTable = (currentTable + 1) %% (N//2)
-		event.preventDefault()
-
-	[a,b] = tournament.pairs[currentTable]
-	pa = tournament.persons[a]
-	pb = tournament.persons[b]
-
-	if key in '0 1' then handleResult a,b,pa,pb,key
+	if state == 2 # Names
+		if key == 'ArrowUp' 
+			currentPlayer = (currentPlayer - 1) %% N
+			event.preventDefault()
+		if key == 'ArrowDown'
+			currentPlayer = (currentPlayer + 1) %% N
+			event.preventDefault()
+		if key in 'pP' then tournament.lotta()
+		if key in 'zZ' then tournament.playersByName[currentPlayer].toggle()
 
 	if key == 'Tab'
 		fixCanvas 1		
 		event.preventDefault()
 	if key == 'Enter' then fixCanvas -1
 
-	if key in 'pP' then tournament.lotta()
 	if key in 'w' then ZOOM[state] += 1
 	if key in 's' then ZOOM[state] -= 1
 	if key in 'W' then ZOOM[state] += 4
@@ -855,8 +894,5 @@ window.keyPressed = (event) ->
 	if key in 'wWsS'
 		if state == 0 then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
 		if state == 1 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
-
-	if key == 'x' then fakeInput()
-	if key == 'Delete' then handleDelete pa,pb
 
 	xdraw()
