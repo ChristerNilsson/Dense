@@ -18,7 +18,8 @@ ZOOM = [40,40,40] # vertical line distance for three states
 
 datum = ''
 currentTable = 0
-currentResult = 0 
+#currentResult = 0 
+currentPlayer = 0
 tournament = null
 errors = [] # id för motsägelsefulla resultat. Tas bort med Delete
 
@@ -67,16 +68,13 @@ XMIN = 1000
 normera = (x) -> x # (1000*(XMAX-x) + 2000*(x-XMIN)) / (XMAX - XMIN)
 
 class Player
-	constructor : (@id, @elo="",  @opp=[], @col="", @res="",@name="") ->
-		@active = true
-
+	constructor : (@id, @elo="",  @opp=[], @col="", @res="",@name="") -> @active = true
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
 
 	eloSum : -> 
 		summa = 0
 		for i in range @res.length
-			if @opp[i] != -1
-				summa += normera(tournament.persons[@opp[i]].elo) * tournament.bonus[@col[i] + @res[i]] 
+			if @opp[i] != -1 then summa += normera(tournament.persons[@opp[i]].elo) * tournament.bonus[@col[i] + @res[i]] 
 		summa
 
 	avgEloDiff : ->
@@ -84,10 +82,7 @@ class Player
 		for id in @opp.slice 0, @opp.length - 1
 			#res.push abs normera(@elo) - normera(tournament.persons[id].elo)
 			if id != -1 then res.push abs @elo - tournament.persons[id].elo
-		if res.length == 0
-			0
-		else
-			sum(res) / res.length
+		if res.length == 0 then 0 else sum(res) / res.length
 
 	balans : -> # färgbalans
 		result = 0
@@ -412,10 +407,8 @@ class Tournament
 				s += @txtT p.name,                     25, window.LEFT
 				s += @txtT p.position.toString(),       4, window.RIGHT
 			else
-				s += ' paus ' #@txtT (1 + p.chair//2).toString(), 3, window.RIGHT
-				#s += @txtT RINGS[p.col[r][0]],          3, window.CENTER
+				s += '      '
 				s += @txtT p.name,                     25, window.LEFT
-				# s += @txtT p.position.toString(),       4, window.RIGHT
 			text s,10,y
 
 	showTables : ->
@@ -667,7 +660,7 @@ class Tournament
 
 		inv = invert (p.id for p in playersByEloSum)
 
-		y = 1.0 * ZOOM[state] + currentResult
+		y = 1.0 * ZOOM[state] # + currentResult
 		textAlign LEFT
 		rheader = _.map range(1,@rounds+1), (i) -> "#{i%10} "
 		rheader = rheader.join ' '
@@ -693,7 +686,6 @@ class Tournament
 
 			for r in range @round-1
 				x = ZOOM[state] * (10.85 + 0.9*r)
-				print 'xxx',person.opp[r]
 				if person.opp[r] == -1
 					@lightbulb person.col[r][0], x, y, "", ""
 				else
@@ -731,29 +723,7 @@ downloadFile = (txt,filename) ->
 	document.body.removeChild a
 	URL.revokeObjectURL url
 
-prBoth = (score) ->
-	a = ASCII.indexOf score
-	b = 2 - a
-	ax = prRes score
-	bx = prRes ASCII[b]
-	if ax.length == 1 then ax = ' ' + ax
-	if bx.length == 1 then bx = bx + ' '
-	ax + ' - ' + bx
-
-prRes = (score) ->
-	score = ASCII.indexOf score
-	a = "#{score // 2}"
-	if a == "0" then a=""
-	b = if score % 2 == 1 then '½' else ''
-	if a+b == "" then return '0'
-	a+b
-assert '0',  prRes '0'
-assert '½',  prRes '1'
-assert '1',  prRes '2'
-assert '1½', prRes '3'
-assert '4',  prRes '8'
-assert '5',  prRes 'a'
-assert '5½', prRes 'b'
+prBoth = (score) -> " #{'0½1'[score]} - #{'1½0'[score]} "
 
 invert = (arr) ->
 	res = []
@@ -773,7 +743,7 @@ window.setup = ->
 	textFont 'Courier New'
 	textAlign CENTER,CENTER
 	tournament = new Tournament()
-	tournament.lotta()
+	#tournament.lotta()
 	state = 0
 	window.windowResized()
 

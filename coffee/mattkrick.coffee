@@ -1,5 +1,8 @@
 range = _.range
 
+# Converted to Coffeescript form JS by Christer Nilsson. Original: https://github.com/mattkrick/EdmondsBlossom
+# Converted to JS from Python by Matt Krick. Original: https://jorisvr.nl/files/graphmatching/20130407/mwmatching.py
+
 export class Edmonds
 	constructor : (@edges, @maxCardinality=true) ->
 		@nEdge = @edges.length
