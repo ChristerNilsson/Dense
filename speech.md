@@ -1,6 +1,4 @@
-# Dense Pairings - ett alternativ till Swiss ?
-
-ELO Pairings?
+# ELO Pairings - ett alternativ till Swiss ?
 
 ## Historik
 
@@ -38,26 +36,26 @@ ELO Pairings?
 
 ## Teaser
 
-Här visar jag hur en turnering med 78 deltagare, [Tyresö Open 2024](https://member.schack.se/ShowTournamentServlet?id=13664&listingtype=2), hanteras med Swiss samt Dense Pairings.  
+Här visar jag hur en turnering med 78 deltagare, [Tyresö Open 2024](https://member.schack.se/ShowTournamentServlet?id=13664&listingtype=2), hanteras med Swiss samt ELO Pairings.  
 Utgången av inledande ronder är ofta given och innebär en mindre stimulerande transportsträcka för båda spelarna.  
 I denna turnering snabbades denna resa upp genom att de fyra första ronderna spelades med kortare betänktetid, 15m + 5s.  
 Därefter följde fyra långpartier, 90m + 30s.  
 
 För att bestämma hur väl en lottning motsvarar målet, utvecklades ett mätetal, benämnt Sparseness (gleshet).  
 Detta beräknas genom att ta fram medelvärdet av alla partiers absoluta elo-differens.  
-Sparseness för Swiss blev 220.4 och för Dense Pairings 44.85 (simulerat).  
-Swiss är i detta fall, alltså fem gånger glesare än Dense Pairings.
+Sparseness för Swiss blev 220.4 och för ELO Pairings 44.85 (simulerat).  
+Swiss är i detta fall, alltså fem gånger glesare än ELO Pairings.
 
 [Swiss Dutch](swiss.txt)  
-[Dense Pairings](dense.txt)  
-[Dense vs Swiss](https://docs.google.com/spreadsheets/d/1DHRnlp8Q6RnnG-gF-fg0liyS2zZINEF5typxI497JyE/edit?usp=sharing)
+[ELO Pairings](dense.txt)  
+[ELO Pairings vs Swiss](https://docs.google.com/spreadsheets/d/1DHRnlp8Q6RnnG-gF-fg0liyS2zZINEF5typxI497JyE/edit?usp=sharing)
 
-Dense Pairings har utgångspunkten att alla ska möta spelare med liknande spelstyrka.  
+ELO Pairings har utgångspunkten att alla ska möta spelare med liknande spelstyrka.  
 Idealet är att varje spelare har en egen grupp đär spelaren själv ligger i mitten.  
 Detta är dock omöjligt för spelarna i början och slutet av listan.  
 Den som har högst rating kan bara spela med lägre ratade och tvärtom.  
 
-### Dense Pairings
+### ELO Pairings
 
 I varje rond paras spelare med närliggande rating ihop.  
 Detta under förutsättning att de ej mötts förut och att färgerna är tillåtna.  
@@ -70,7 +68,7 @@ Detta hanteras genom att istället för partipoäng ackumuleras elo-poäng för 
 * En remi ger båda spelarna halva motståndarens elo-rating.
 
 Metodiken påminner om [Sonneborn-Berger](https://en.wikipedia.org/wiki/Sonneborn%E2%80%93Berger_score).  
-I Swiss är en vinst mot den starkaste värd exakt lika mycket som en vinst mot den svagaste, vilket Dense Pairings alltså ändrar på.
+I Swiss är en vinst mot den starkaste värd exakt lika mycket som en vinst mot den svagaste, vilket ELO Pairings alltså ändrar på.
 
 ## Några exempel på beräkningar
 
@@ -92,15 +90,17 @@ Ture får 900 elos (remi)
 * Varje länk har en kostnad, i vårt fall den absoluta elo-skillnaden
 * Algoritmen levererar en lista med de länkar som ger lägsta totala kostnad
 
-## Dense Pairings vs Bergergrupper
+## ELO Pairings vs Bergergrupper
 * Berger ger större gleshet, pga fler hörn
 * Berger ger fler frironder, eftersom spelare ej flyttas mellan grupperna
 * Berger ger flera vinnare, som ej är jämförbara
 * Berger ger samma poäng för ett vinstparti oavsett spelstyrka.
 
-## Normering av Elo-talet
-* Deltagarnas elo-tal anpassas till intervallet 1000-2000.
+## Normering av Elo-talet (ej infört, diskussionspunkt)
+* Deltagarnas elo-tal anpassas till intervallet [a,b] så att b=2a.
+* T ex kan Tyresö Opens ELO-tal [1406,2416], justeras till [1010,2020] genom att subtrahera 396.
 * Detta innebär att en vinst i lägsta grupp motsvarar en remi i högsta grupp.
+* Man kan laborera med faktorn 2 ovan för att öka eller minska chansen för lägre ratade att vinna turneringen.
 
 ## Referenser
 

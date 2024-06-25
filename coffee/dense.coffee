@@ -1,5 +1,6 @@
 import { parseExpr } from './parser.js'
 import { Edmonds } from './mattkrick.js' 
+import { Button } from './button.js' 
 
 # parameters that somewhat affects matching
 COST = 'QUADRATIC' # QUADRATIC=1.01 or LINEAR=1
@@ -14,16 +15,14 @@ range = _.range
 ASCII = '0123456789abcdefg'
 ALFABET = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' # 62 ronder maximalt
 N = 0 # number of players
-ZOOM = [40,40,40] # vertical line distance for three states
+ZOOM = [40,40,40,40] # vertical line distance for four states
 
 datum = ''
-currentTable = 0
-#currentResult = 0 
-currentPlayer = 0
 tournament = null
 errors = [] # id för motsägelsefulla resultat. Tas bort med Delete
 
-state = 0 # 0=Tables 1=Standings 2=Names
+pages = []
+state = 0 # 0=Tables 1=Standings 2=Names 3=Pairings
 resultat = [] # 012 sorterad på id
 message = '' #This is a tutorial tournament. Use it or edit the URL'
 
@@ -68,7 +67,7 @@ XMIN = 1000
 normera = (x) -> x # (1000*(XMAX-x) + 2000*(x-XMIN)) / (XMAX - XMIN)
 
 class Player
-	constructor : (@id, @elo="",  @opp=[], @col="", @res="",@name="") -> @active = true
+	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> @active = true
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
 
 	toggle : -> 
@@ -163,10 +162,10 @@ class Tournament
 
 	makeEdges : ->
 		edges = []
-		for a in range N
+		for a in range N + 1  # tag med frironden
 			pa = @persons[a]
 			if not pa.active then continue
-			for b in range a+1,N
+			for b in range a+1,N+1
 				pb = @persons[b]
 				if not pb.active then continue
 				if DIFF == 'ELO' then diff = abs pa.elo - pb.elo
@@ -207,37 +206,16 @@ class Tournament
 				solution[i] = -1
 		result
 
-	lotta : () ->
-
-		#print @players
-
+	preMatch : ->
 		for p in @persons
-			if not p.active
-				if p.res.length < p.col.length
-					p.res += '0'
+			# if not p.active
+			if p.res.length < p.col.length then p.res += '0'
 
-				# if p.res.length != p.col.length
-					# print 'avbrutet!'
-				# return
+		active = _.filter @persons.slice(0,@persons.length-1), (p) -> p.active
+		print 'preMatch',active
+		@persons[N].active = active.length % 2 == 1
 
-		print 'Lottning av rond ',@round
-		document.title = 'Round ' + (@round+1)
-
-		start = new Date()
-		net = @makeEdges @persons
-		print 'net',net
-		solution = @findSolution net
-		print 'solution', solution
-
-		missing = _.filter solution, (x) -> x==-1
-		print 'missing',missing
-		if missing.length != @paused.length
-			print 'Solution failed!'
-			return 
-		@pairs = @unscramble solution
-		print 'pairs',@pairs
-		print 'cpu:',new Date() - start
-
+	postMatch : ->
 		for p in @persons
 			if p.active then continue
 			p.opp.push -1
@@ -276,18 +254,48 @@ class Tournament
 			pa.chair = 2*i
 			pb.chair = 2*i + 1
 
+	lotta : () ->
+
+		#print @players
+
+		@preMatch()
+
+		print 'Lottning av rond ',@round
+		document.title = 'Round ' + (@round+1)
+
+		start = new Date()
+		net = @makeEdges @persons
+		print 'net',net
+		solution = @findSolution net
+		print 'solution', solution
+
+		missing = _.filter solution, (x) -> x==-1
+
+		inactive = _.filter @persons.slice(0,@persons.length-1), (p) -> not p.active
+
+		print 'lotta', missing.length, inactive.length
+		if missing.length != inactive.length
+			print 'Solution failed!'
+			return 
+
+		@pairs = @unscramble solution
+		print 'pairs',@pairs
+		print 'cpu:',new Date() - start
+
+		@postMatch()
+
 		print 'yyy',@persons
 
 		downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
 		start = new Date()
-		if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt"
+		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt"
 		downloadFile tournament.makeStandardFile(), "#{@title} R#{@round}.txt"
 		# downloadFile @makeEdges(), "R#{@round} Net.txt"
 		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
 
 		@round += 1
 		state = 0
-		xdraw()
+		#xdraw()
 
 	fetchURL : (url = location.search) ->
 		if url == '' then window.location.href = "https://github.com/ChristerNilsson/Dense/blob/main/README.md"
@@ -346,154 +354,10 @@ class Tournament
 		print (p.elo for p in @persons)
 		print 'sorted players', @persons # by id AND descending elo
 
-		if @ROUND == 0
-			if N % 2 == 1
-				@persons.push new Player N, 0, '-frirond-'
-				N += 1
-				# persons = _.map range(N), (i) -> {id:i, name: res.NAME[i], elo: res.ELO[i], col:'', res:[], bal:0, opp:[], T:[]}
+		if @round == 0 then @persons.push new Player N, 'BYE', 0 # Frirond ska ALLTID finnas, men kanske vara inaktiv
 
-		@playersByName = _.sortBy @persons, (player) -> player.name
+		@playersByName = _.sortBy @persons.slice(0, @persons.length-1), (player) -> player.name
 		print 'playersByName', (p.name for p in @playersByName)
-
-	txtT : (value, w, align=window.CENTER) -> 
-		if value.length > w then value = value.substring 0,w
-		if value.length < w and align==window.RIGHT then value = value.padStart w
-		if align==window.LEFT then res = value + _.repeat ' ',w-value.length
-		if align==window.RIGHT then res = _.repeat(' ',w-value.length) + value
-		if align==window.CENTER 
-			diff = w-value.length
-			lt = _.repeat ' ',(1+diff)//2
-			rt = _.repeat ' ',diff//2
-			res = lt + value + rt
-		res
-	#assert "   Sven   ", txtT "Sven",10
-
-	showHeader : (header,round) ->
-		y = ZOOM[state]/2
-		textAlign LEFT,CENTER
-		s = ''
-		s += @txtT "#{@title} #{@datum}" ,30, window.LEFT
-		s += ' ' + @txtT header, 15, window.CENTER
-		s += ' ' + @txtT 'Round ' + round, 26, window.RIGHT
-		text s,10,y
-
-	showFooter : (y,footer) -> 
-		s = @txtT footer, 72
-		text s, 10, (3 + y) * 0.5 * ZOOM[state]
-
-	txt : (value, x, y, align=null, color=null) ->
-		if align then textAlign align,CENTER
-		if color then fill color
-		text value,x,y
-
-	showNames : ->
-		# if @round == 0 then return
-		# print 'showNames'
-
-		fill 'white'
-		@showHeader 'Names',@round
-		if @round == 0
-			@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller"
-		else
-			@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller  tab=tables enter=standings"
-
-		y = 1.0 * ZOOM[state]
-		s = ""
-		s += @txtT 'Table',     6,window.LEFT
-		s += @txtT 'Name',     25,window.LEFT
-		s += @txtT 'Pos', 4,window.RIGHT
-		textAlign window.LEFT
-		text s,10,y
-
-		playersByEloSum = _.clone @persons
-		playersByEloSum.sort (a,b) -> b.eloSum() - a.eloSum()
-
-		for player,i in playersByEloSum
-			p = @persons[player.id]
-			p.position = ""
-			if p.eloSum() > 0 then p.position = "#{i+1}"
-
-		fill 'black'
-		r = tournament.round - 1
-		for p,i in @playersByName
-			y += ZOOM[state] * 0.5
-			s = ""
-			if tournament.round == 0
-				s += if p.active then '      ' else ' paus '
-				s += @txtT p.name,                     25, window.LEFT
-			else
-				if p.active
-					s += @txtT (1 + p.chair//2).toString(), 3, window.RIGHT
-					s += @txtT RINGS[p.col[r][0]],          3, window.CENTER
-					s += @txtT p.name,                     25, window.LEFT
-					s += @txtT p.position.toString(),       4, window.RIGHT
-				else
-					s += '      '
-					s += @txtT p.name,                     25, window.LEFT
-
-			if i == currentPlayer
-				fill  'yellow'
-				noStroke()
-				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
-				fill 'black'
-
-			text s,10,y
-
-	showTables : ->
-		fill 'white'
-		@showHeader 'Tables',@round
-		@showFooter tournament.pairs.length, "1 space=½ 0 delete Pair W=large S=small tab=standings enter=names"
-
-		y = 1.0 * ZOOM[state]
-		s = ""
-		s +=       @txtT 'Tbl',    3,window.RIGHT
-		s += ' ' + @txtT 'Elo',    4,window.RIGHT
-		s += ' ' + @txtT 'White', 25,window.LEFT
-		s += ' ' + @txtT 'Result', 7,window.CENTER
-		s += ' ' + @txtT 'Black', 25,window.LEFT
-		s += ' ' + @txtT 'Elo',    4,window.RIGHT
-		textAlign window.LEFT
-		text s,10,y
-
-		for i in range @pairs.length
-			[a,b] = @pairs[i]
-			a = @persons[a]
-			b = @persons[b]
-			y += ZOOM[state] * 0.5
-			pa = myRound a.score(), 1
-			pb = myRound b.score(), 1
-			both = if a.res.length == a.col.length then prBoth _.last(a.res) else "   -   "
-
-			nr = i+1
-			s = ""
-			s += @txtT nr.toString(), 3, window.RIGHT
-			s += ' ' + @txtT a.elo.toString(), 4, window.RIGHT
-			s += ' ' + @txtT a.name, 25, window.LEFT
-			s += ' ' + @txtT both,7, window.CENTER
-			s += ' ' + @txtT b.name, 25, window.LEFT
-			s += ' ' + @txtT b.elo.toString(), 4, window.RIGHT
-
-			if i == currentTable
-				fill  'yellow'
-				noStroke()
-				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
-				fill 'black'
-			else
-				if i in errors then fill 'red' else fill 'black'
-			text s,10,y
-
-	lightbulb : (color, x, y, result, opponent) ->
-		if result == "" then return
-		push()
-		result = '012'.indexOf result
-		fill 'red gray green'.split(' ')[result]
-		rectMode CENTER
-		rect x,y,0.84 * ZOOM[state],0.45 * ZOOM[state]
-		fill {b:'black', ' ':'yellow', w:'white'}[color]
-		noStroke()
-		strokeWeight = 0
-		@txt opponent,x,y+1,CENTER
-		pop()
 
 	makeURL : ->
 		res = []
@@ -513,87 +377,6 @@ class Tournament
 		res = res.concat players
 		res.join '\n'
 
-	makeStandings : (header,res) ->
-		if @pairs.length == 0 then res.push "This ROUND can't be paired! (Too many rounds)"
-
-		temp = _.clone @persons
-		temp.sort (a,b) -> 
-			diff = b.eloSum() - a.eloSum()
-			if diff != 0 then return diff
-			return b.elo - a.elo
-
-		inv = invert (p.id for p in temp)
-
-		res.push "STANDINGS" + header
-		res.push ""
-
-		header = ""
-		header +=       @txtT "#",     2
-		# header += ' ' + @txtT "Id",    4,window.RIGHT
-		header += ' ' + @txtT "Elo",   4,window.RIGHT
-		header += ' ' + @txtT "Name", 25,window.LEFT
-		for r in range @round
-			header += @txtT "#{r+1}",6,window.RIGHT
-		header += '  ' + @txtT "EloSum", 8,window.RIGHT
-		if @round <= @expl then header += '  ' + @txtT "Explanation", 12,window.LEFT
-		
-		for person,i in temp
-			if i % @ppp == 0 then res.push header
-			s = ""
-			s +=       @txtT (1+i).toString(),          2, window.RIGHT
-			s += ' ' + @txtT person.elo.toString(),     4, window.RIGHT
-			s += ' ' + @txtT person.name,              25, window.LEFT
-			s += ' '
-			for r in range @round
-				if person.opp[r] == -1
-					s += '      '
-				else 
-					s += @txtT "#{1+inv[person.opp[r]]}#{RINGS[person.col[r][0]]}#{"0½1"[person.res[r]]}", 6, window.RIGHT			
-			s += ' ' + @txtT person.eloSum().toFixed(1),  8, window.RIGHT
-			terms = []
-			print 'expl',@round,@expl,@round < @expl
-			if @round <= @expl
-				for r in range @round
-					if person.opp[r] == -1
-						terms.push "0 * 0"
-					else
-						key = person.col[r][0]+person.res[r]
-						elo = @persons[person.opp[r]].elo
-						terms.push "#{@bonus[key]} * #{elo}"
-				s += '  (' + terms.join(' + ') + ')'
-			res.push s 
-			if i % @ppp == @ppp-1 then res.push "\f"
-		res.push "\f"
-
-	makeNames : (header,players,res) -> # players sorterad på namn
-		temp = _.clone players
-		temp.sort (a,b) -> b[0].eloSum() - a[0].eloSum()
-
-		for p,i in temp
-			p[0].position = ""
-			if p[0].eloSum() > 0 then p[0].position = "##{i+1}"
-
-		res.push "NAMES" + header
-		res.push ""
-		r = tournament.round
-		for p,i in players
-			if i % @ppp == 0 then res.push "Table Name"
-			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{p[0].position}" 
-			if i % @ppp == @ppp-1 then res.push "\f"
-		res.push "\f"
-
-	makeTables : (header,res) ->
-		res.push "TABLES" + header
-		res.push ""
-		for i in range @pairs.length
-			[a,b] = @pairs[i]
-			if i % @tpp == 0 then res.push "Table      #{RINGS.w}".padEnd(25) + _.pad("",28+10) + "#{RINGS.b}" #.padEnd(25)
-			pa = @persons[a]
-			pb = @persons[b]
-			res.push ""
-			res.push _.pad(i+1,6) + pa.elo + ' ' + @txtT(pa.name, 25, window.LEFT) + ' ' + _.pad("|____| - |____|",20) + ' ' + pb.elo + ' ' + @txtT(pb.name, 25, window.LEFT)
-			if i % @tpp == @tpp-1 then res.push "\f"
-
 	makeStandardFile : () ->
 		res = []
 		players = []
@@ -610,10 +393,12 @@ class Tournament
 		header1 = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 
 		if @round > 0 
-			@makeStandings header0,res
+			pages[1].make header0,res
 		if @round < @rounds 
-			@makeNames header1,players,res
-			@makeTables header1,res
+			# @makeNames header1,players,res
+			# @makeTables header1,res
+			pages[2].make header1,players,res
+			pages[0].make header1,res
 
 		res.join "\n"	
 
@@ -668,19 +453,329 @@ class Tournament
 			matrix.push res
 		@drawMatrix @title, matrix
 
-	showStandings : ->
+class Page
+
+	constructor : ->
+		@buttons = []
+
+	showHeader : (header,round) ->
+		y = ZOOM[state]/2
+		textAlign LEFT,CENTER
+		s = ''
+		s += @txtT "#{tournament.title} #{tournament.datum}" ,30, window.LEFT
+		s += ' ' + @txtT header, 15, window.CENTER
+		s += ' ' + @txtT 'Round ' + round, 26, window.RIGHT
+		text s,10,y
+
+	showFooter : (y,footer) -> 
+		s = @txtT footer, 72
+		text s, 10, (3 + y) * 0.5 * ZOOM[state]
+
+	txtT : (value, w, align=window.CENTER) -> 
+		if value.length > w then value = value.substring 0,w
+		if value.length < w and align==window.RIGHT then value = value.padStart w
+		if align==window.LEFT then res = value + _.repeat ' ',w-value.length
+		if align==window.RIGHT then res = _.repeat(' ',w-value.length) + value
+		if align==window.CENTER 
+			diff = w-value.length
+			lt = _.repeat ' ',(1+diff)//2
+			rt = _.repeat ' ',diff//2
+			res = lt + value + rt
+		res
+	#assert "   Sven   ", txtT "Sven",10
+
+	txt : (value, x, y, align=null, color=null) ->
+		push()
+		if align then textAlign align,window.CENTER
+		if color then fill color
+		text value,x,y
+		pop()
+
+class Tables extends Page
+
+	constructor : () ->
+		super()
+		t = tournament
+		y = 9.2 * ZOOM[state] * 0.5
+		h = 20
+		@currentTable = 0
+		@keys = {}
+		@buttons = {}
+		@buttons.t = new Button 'Tables',     280,y,80,h, () => setState 1
+		@buttons.n = new Button 'Names',     80,y,70,h, () => setState 2
+		@buttons.s = new Button 'Standings', 160,y,110,h, () => setState 1
+		@buttons.p = new Button 'Pair',      5,y,65,h, () => setState 3
+
+		@buttons['1'] = new Button '1',        350+200,y,20,h, () => @handleResult t, '1'
+		@buttons[' '] = new Button '½',        380+200,y,20,h, () => @handleResult t, ' '
+		@buttons['0'] = new Button '0',        410+200,y,20,h, () => @handleResult t, '0'
+		@buttons.Delete = new Button 'Del',    440+200,y,40,h, () => @handleDelete t
+		@buttons.z = new Button 'Z',           520+200,y,20,h, () => zoomIn N//2
+		@buttons.x = new Button 'X',           550+200,y,20,h, () => zoomOut N//2
+		@buttons.q = new Button 'Q',           580+200,y,20,h, () => @fakeInput()
+		@buttons.ArrowUp = new Button '',       10,y,10,h, () =>
+			@currentTable = (@currentTable - 1) %% tournament.pairs.length
+			event.preventDefault()
+		@buttons.ArrowDown = new Button '',    10,y,10,h, () =>
+			@currentTable = (@currentTable + 1) %% tournament.pairs.length
+			event.preventDefault()
+		# @buttons.t.active = false
+		print @buttons
+
+	keyPressed : (event, key)-> 
+		# [a,b] = tournament.pairs[@currentTable]
+		# pa = tournament.persons[a]
+		# pb = tournament.persons[b]
+		# print key of @buttons
+		@buttons[key].click()
+		#@draw()
+
+		# if key in '1 0' then @handleResult pa,pb,key
+		# if key == 'Delete' then @handleDelete pa,pb
+		# if key == 's' then setState 1
+		# if key == 'n' then setState 2
+		# if key == 'p' then setState 3
+		# if key == 'z' then zoomIn N//2
+		# if key == 'Z' then zoomOut N//2
+		# if key == 'x' then @fakeInput()
+		#, "1 space=½ 0 delete Standings Names Pair zZ=zoom"
+
+	mousePressed : -> @currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
+
+	# keyPressed : (event, key) ->
+	# 	if tournament.round > 0 # Tables
+	# 		if key == 'Home' then @currentTable = 0
+	# 		if key == 'End' then @currentTable = tournament.pairs.length - 1
+	# 		# if key == 'ArrowUp' 
+	# 		# 	@currentTable = (currentTable - 1) %% tournament.pairs.length
+	# 		# 	event.preventDefault()
+	# 		# if key == 'ArrowDown'
+	# 		# 	@currentTable = (currentTable + 1) %% tournament.pairs.length
+	# 		# 	event.preventDefault()
+	# 		# if key in 'pP' then tournament.lotta()
+	# 		if key == 'x' then @fakeInput()
+	# 		print 'currentTable',@currentTable
+	# 		if 0 <= @currentTable < tournament.pairs.length
+	# 			if key in '0 1' then @handleResult a,b,pa,pb,key
+	# 			if key == 'Delete' then @handleDelete pa,pb
+
+	elo_probabilities : (R_W, R_B, draw=0.2) ->
+		E_W = 1 / (1 + 10 ** ((R_B - R_W) / 400))
+		win = E_W - draw / 2
+		loss = (1 - E_W) - draw / 2
+		x = _.random 0,1,true
+		index = 2
+		if x < loss + draw then index = 1
+		if x < loss then index = 0
+		index
+
+	handleResult : (t,key) =>
+		[a,b] = t.pairs[@currentTable]
+		pa = t.persons[a]
+		pb = t.persons[b]
+		index = '0 1'.indexOf key
+		ch = "012"[index]
+		if pa.res.length == pa.col.length 
+			if ch != _.last pa.res
+				errors.push @currentTable
+				print 'errors',errors
+		else
+			if pa.res.length < pa.col.length then pa.res += "012"[index]
+			if pb.res.length < pb.col.length then pb.res += "210"[index]
+		@currentTable = (@currentTable + 1) %% tournament.pairs.length
+
+	fakeInput : ->
+		currentTable = 0 
+		print 'fakeInput1',tournament.persons
+		for i in range tournament.pairs.length
+			[a,b] = tournament.pairs[i]
+			pa = tournament.persons[a]
+			pb = tournament.persons[b]
+			res = @elo_probabilities pa.elo, pb.elo
+			if pa.res.length < pa.col.length then pa.res += "012"[res] 
+			if pb.res.length < pb.col.length then pb.res += "210"[res]
+
+		# for p in tournament.persons
+		# 	if not p.active then p.res += '0'
+		print 'fakeInput2',tournament.persons
+
+	handleDelete : ->
+		[a,b] = tournament.pairs[@currentTable]
+		pa = tournament.persons[a]
+		pb = tournament.persons[b]
+		i = @currentTable
+		errors = (e for e in errors when e != i)
+		if pa.res.length == pb.res.length
+			[a,b] = tournament.pairs[i]
+			pa = tournament.persons[a]
+			pb = tournament.persons[b]
+			# b = tournament.pairings[2*i+1]
+
+			pa.res = pa.res.substring 0,pa.res.length-1
+			pb.res = pb.res.substring 0,pb.res.length-1
+		@currentTable = (@currentTable + 1) %% tournament.pairs.length
+
+	make : (header,res) ->
+		res.push "TABLES" + header
+		res.push ""
+		for i in range tournament.pairs.length
+			[a,b] = tournament.pairs[i]
+			if i % tournament.tpp == 0 then res.push "Table      #{RINGS.w}".padEnd(25) + _.pad("",28+10) + "#{RINGS.b}" #.padEnd(25)
+			pa = tournament.persons[a]
+			pb = tournament.persons[b]
+			res.push ""
+			res.push _.pad(i+1,6) + pa.elo + ' ' + @txtT(pa.name, 25, window.LEFT) + ' ' + _.pad("|____| - |____|",20) + ' ' + pb.elo + ' ' + @txtT(pb.name, 25, window.LEFT)
+			if i % tournament.tpp == tournament.tpp-1 then res.push "\f"
+
+	draw : ->
+		print 'Tables.draw'
+		fill 'white'
+		@showHeader 'Tables',tournament.round
+		#@showFooter tournament.pairs.length, "1 space 0 delete Standings Names Pair z Z x"
+		for key of @buttons
+			button = @buttons[key]
+			print key,button
+			button.draw()
+
+		y = 1.0 * ZOOM[state]
+		s = ""
+		s +=       @txtT 'Tbl',    3,window.RIGHT
+		s += ' ' + @txtT 'Elo',    4,window.RIGHT
+		s += ' ' + @txtT 'White', 25,window.LEFT
+		s += ' ' + @txtT 'Result', 7,window.CENTER
+		s += ' ' + @txtT 'Black', 25,window.LEFT
+		s += ' ' + @txtT 'Elo',    4,window.RIGHT
+		textAlign window.LEFT
+		text s,10,y
+
+		for i in range tournament.pairs.length
+			[a,b] = tournament.pairs[i]
+			a = tournament.persons[a]
+			b = tournament.persons[b]
+			y += ZOOM[state] * 0.5
+			pa = myRound a.score(), 1
+			pb = myRound b.score(), 1
+			both = if a.res.length == a.col.length then prBoth _.last(a.res) else "   -   "
+
+			nr = i+1
+			s = ""
+			s += @txtT nr.toString(), 3, window.RIGHT
+			s += ' ' + @txtT a.elo.toString(), 4, window.RIGHT
+			s += ' ' + @txtT a.name, 25, window.LEFT
+			s += ' ' + @txtT both,7, window.CENTER
+			s += ' ' + @txtT b.name, 25, window.LEFT
+			s += ' ' + @txtT b.elo.toString(), 4, window.RIGHT
+
+			if i == @currentTable
+				fill  'yellow'
+				noStroke()
+				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
+				fill 'black'
+			else
+				if i in errors then fill 'red' else fill 'black'
+			text s,10,y
+
+zoomIn = (n) ->
+	ZOOM[state]--
+	resizeCanvas windowWidth-4, (3.5+n) * 0.5 * ZOOM[state]
+zoomOut = (n) ->
+	ZOOM[state]++
+	resizeCanvas windowWidth-4, (3.5+n) * 0.5 * ZOOM[state]
+
+class Standings extends Page
+
+	constructor : () ->
+		super()
+		@keys = {}
+
+	mousePressed : ->
+
+	keyPressed : (event,key) ->
+		if key == 't' then setState 0
+		if key == 'n' then setState 2
+		if key == 'p' then setState 3
+		if key == 'z' then zoomIn N//2
+		if key == 'Z' then zoomOut N//2
+
+	make : (header,res) ->
+		if tournament.pairs.length == 0 then res.push "This ROUND can't be paired! (Too many rounds)"
+
+		temp = _.clone tournament.persons
+		temp.sort (a,b) -> 
+			diff = b.eloSum() - a.eloSum()
+			if diff != 0 then return diff
+			return b.elo - a.elo
+
+		inv = invert (p.id for p in temp)
+
+		res.push "STANDINGS" + header
+		res.push ""
+
+		header = ""
+		header +=       @txtT "#",     2
+		# header += ' ' + @txtT "Id",    4,window.RIGHT
+		header += ' ' + @txtT "Elo",   4,window.RIGHT
+		header += ' ' + @txtT "Name", 25,window.LEFT
+		for r in range tournament.round
+			header += @txtT "#{r+1}",6,window.RIGHT
+		header += '  ' + @txtT "EloSum", 8,window.RIGHT
+		if tournament.round <= @expl then header += '  ' + @txtT "Explanation", 12,window.LEFT
+		
+		for person,i in temp
+			if i % tournament.ppp == 0 then res.push header
+			s = ""
+			s +=       @txtT (1+i).toString(),          2, window.RIGHT
+			s += ' ' + @txtT person.elo.toString(),     4, window.RIGHT
+			s += ' ' + @txtT person.name,              25, window.LEFT
+			s += ' '
+			for r in range tournament.round
+				if person.opp[r] == -1
+					s += '      '
+				else 
+					s += @txtT "#{1+inv[person.opp[r]]}#{RINGS[person.col[r][0]]}#{"0½1"[person.res[r]]}", 6, window.RIGHT			
+			s += ' ' + @txtT person.eloSum().toFixed(1),  8, window.RIGHT
+			terms = []
+			print 'expl',tournament.round,@expl,tournament.round < @expl
+			if tournament.round <= @expl
+				for r in range tournament.round
+					if person.opp[r] == -1
+						terms.push "0 * 0"
+					else
+						key = person.col[r][0]+person.res[r]
+						elo = @persons[person.opp[r]].elo
+						terms.push "#{tournament.bonus[key]} * #{elo}"
+				s += '  (' + terms.join(' + ') + ')'
+			res.push s 
+			if i % tournament.ppp == tournament.ppp-1 then res.push "\f"
+		res.push "\f"
+
+	lightbulb : (color, x, y, result, opponent) ->
+		print 'lightbulb',color, x, y, result, opponent
+		if result == "" then return
+		push()
+		result = '012'.indexOf result
+		fill 'red gray green'.split(' ')[result]
+		rectMode window.CENTER
+		rect x,y,0.84 * ZOOM[state],0.45 * ZOOM[state]
+		fill {b:'black', ' ':'yellow', w:'white'}[color]
+		noStroke()
+		strokeWeight = 0
+		@txt opponent,x,y+1,window.CENTER
+		pop()
+
+	draw : ->
 
 		noStroke()
 		fill 'white'
 
-		@showHeader 'Standings',@round-1
-		@showFooter N, "W=larger S=smaller tab=names enter=tables"
+		@showHeader 'Standings',tournament.round-1
+		@showFooter N, "Tables Names Pair z Z"
 
-		if @pairs.length == 0
+		if tournament.pairs.length == 0
 			print "This ROUND can't be paired! (Too many rounds)"
 			return
 
-		playersByEloSum = _.clone @persons
+		playersByEloSum = _.clone tournament.persons.slice 0,N
 		playersByEloSum.sort (a,b) -> 
 			diff = b.eloSum() - a.eloSum()
 			if diff != 0 then return diff
@@ -690,7 +785,7 @@ class Tournament
 
 		y = 1.0 * ZOOM[state] # + currentResult
 		textAlign LEFT
-		rheader = _.map range(1,@rounds+1), (i) -> "#{i%10} "
+		rheader = _.map range(1,tournament.rounds+1), (i) -> "#{i%10} "
 		rheader = rheader.join ' '
 		s = ""
 		s +=       @txtT "Pos",          3,window.RIGHT
@@ -702,36 +797,173 @@ class Tournament
 
 		fill 'black' 
 		for person,i in playersByEloSum
+			print "Standings.draw: #{person}"
 			y += ZOOM[state] * 0.5
 			s = ""
 			s +=       @txtT (1+i).toString(),           3, window.RIGHT
 			s += ' ' + @txtT person.elo.toString(),      4, window.RIGHT
 			s += ' ' + @txtT person.name,               25, window.LEFT
-			s += ' ' + @txtT '',                 3*@rounds, window.CENTER
+			s += ' ' + @txtT '',       3*tournament.rounds, window.CENTER
 			s += ' ' + @txtT person.eloSum().toFixed(1), 7, window.RIGHT
 
 			text s,10,y
 
-			for r in range @round-1
+			for r in range tournament.round-1
 				x = ZOOM[state] * (10.85 + 0.9*r)
 				if person.opp[r] == -1
-					@lightbulb person.col[r][0], x, y, "", ""
+					#@lightbulb person.col[r][0], x, y, "", "BYE"
+					@txt "P",x,y+1,window.CENTER,'black'
+					# text x,y," P "
+				else if person.opp[r] == N
+					#text x,y,"BYE"
+					@txt "BYE",x,y+1,window.CENTER,'black'
 				else
 					@lightbulb person.col[r][0], x, y, person.res[r], 1+inv[person.opp[r]]
 
-copyToClipboard = (text) ->
-	if !navigator.clipboard
-		textarea = document.createElement 'textarea'
-		textarea.value = text
-		document.boF.appendChild textarea
-		textarea.select()
-		document.execCommand 'copy'
-		document.boF.removeChild textarea
-		message = 'Urlen har kopierats till klippbordet 1'
-	else
-		navigator.clipboard.writeText text
-		.then => message = 'Urlen har kopierats till klippbordet 2'
-		.catch (err) => message 'Kopiering till klippbordet misslyckades'
+class Names extends Page
+
+	constructor : () ->
+		super()
+		@currentPlayer = 0
+		@keys = {}
+
+	keyPressed : (event,key) ->
+		if key == 'ArrowUp'
+			@currentPlayer = (@currentPlayer - 1) %% N
+			event.preventDefault()
+		if key == 'ArrowDown'			
+			@currentPlayer = (@currentPlayer + 1) %% N
+			event.preventDefault()
+
+		if key == 't' then setState 0
+		if key == 's' then setState 1
+		if key == 'p' then setState 3
+		if key == 'z' then zoomIn N//2
+		if key == 'Z' then zoomOut N//2
+
+	mousePressed : -> @currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
+
+	make : (header,players,res) -> # players sorterad på namn
+		temp = _.clone players
+		temp.sort (a,b) -> b[0].eloSum() - a[0].eloSum()
+
+		for p,i in temp
+			p[0].position = ""
+			if p[0].eloSum() > 0 then p[0].position = "##{i+1}"
+
+		res.push "NAMES" + header
+		res.push ""
+		r = tournament.round
+		for p,i in players
+			if i % @ppp == 0 then res.push "Table Name"
+			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{p[0].position}" 
+			if i % @ppp == @ppp-1 then res.push "\f"
+		res.push "\f"
+
+	draw : ->
+		# if @round == 0 then return
+		# print 'showNames'
+
+		fill 'white'
+		@showHeader 'Names',tournament.round
+		if tournament.round == 0
+			@showFooter N, "up down Pair z Z"
+		else
+			@showFooter N, "up down Tables Standings Pair z Z"
+
+		y = 1.0 * ZOOM[state]
+		s = ""
+		s += @txtT 'Table',     6,window.LEFT
+		s += @txtT 'Name',     25,window.LEFT
+		s += @txtT 'Pos', 4,window.RIGHT
+		textAlign window.LEFT
+		text s,10,y
+
+		playersByEloSum = _.clone tournament.persons
+		playersByEloSum.sort (a,b) -> b.eloSum() - a.eloSum()
+
+		for player,i in playersByEloSum
+			p = tournament.persons[player.id]
+			p.position = ""
+			if p.eloSum() > 0 then p.position = "#{i+1}"
+
+		fill 'black'
+		r = tournament.round - 1
+		for p,i in tournament.playersByName
+			y += ZOOM[state] * 0.5
+			s = ""
+			if tournament.round == 0
+				s += if p.active then '      ' else ' paus '
+				s += @txtT p.name,                     25, window.LEFT
+			else
+				if p.active and p.name != 'BYE'
+					s += @txtT (1 + p.chair//2).toString(), 3, window.RIGHT
+					s += @txtT RINGS[p.col[r][0]],          3, window.CENTER
+					s += @txtT p.name,                     25, window.LEFT
+					s += @txtT p.position.toString(),       4, window.RIGHT
+				else
+					s += '      '
+					s += @txtT p.name,                     25, window.LEFT
+
+			if i == @currentPlayer
+				fill  'yellow'
+				noStroke()
+				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
+				fill 'black'
+
+			text s,10,y
+
+class Pairings extends Page
+
+	constructor : () ->
+		super()
+		@currentPlayer = 0
+		@keys = {}
+
+	keyPressed : (event,key) ->
+		if key == 'ArrowUp'
+			@currentPlayer = (@currentPlayer - 1) %% N
+			event.preventDefault()
+		if key == 'ArrowDown' 
+			@currentPlayer = (@currentPlayer + 1) %% N
+			event.preventDefault()
+
+		if key == ' ' then tournament.playersByName[@currentPlayer].toggle()
+		if key == 'T' then setState 0
+		if key == 'S' then setState 1
+		if key == 'Enter' then tournament.lotta()
+		if key == 'Escape' then setState 0
+		if key == 'z' then zoomIn N
+		if key == 'Z' then zoomOut N
+
+	mousePressed : -> @currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
+
+	draw : ->
+		fill 'white'
+		@showHeader 'Pairings',tournament.round
+		@showFooter N, "up down space=toggle Enter=pair Esc=leave z Z"
+		# else
+		# 	@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller  tab=tables enter=standings"
+
+		y = 1.0 * ZOOM[state]
+		s = "State Name"
+		textAlign window.LEFT
+		text s,10,y
+
+		fill 'black'
+		r = tournament.round - 1
+		for p,i in tournament.playersByName
+			y += ZOOM[state] * 0.5
+			s = if p.active then '      ' else ' paus '
+			s += @txtT p.name, 25, window.LEFT
+
+			if i == @currentPlayer
+				fill  'yellow'
+				noStroke()
+				rect 0,y-0.25*ZOOM[state],width, 0.5 * ZOOM[state]
+				fill 'black'
+
+			text s,10,y
 
 sum = (s) ->
 	res = 0
@@ -763,136 +995,46 @@ assert [3,2,0,1], invert [2,3,1,0]
 assert [2,3,1,0], invert invert [2,3,1,0]
 
 window.windowResized = -> 
-	if state == 0     then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
-	if state in [1,2] then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
-	xdraw()
+	if state == 0       then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
+	if state in [1,2,3] then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
+	# xdraw()
 
 window.setup = ->
 	textFont 'Courier New'
+	# textAlign window.LEFT,window.TOP
 	textAlign CENTER,CENTER
+	rectMode window.CORNER
 	tournament = new Tournament()
 	# tournament.lotta()
-	state = 2
+	pages = [new Tables, new Standings, new Names, new Pairings]
+	state = 3
 	window.windowResized()
 
-xdraw = ->
+window.draw = ->
 	background 'gray'
 	textSize ZOOM[state] * 0.5
-	if state == 0 then tournament.showTables()
-	if state == 1 then tournament.showStandings()
-	if state == 2 then tournament.showNames()
-
-elo_probabilities = (R_W, R_B, draw=0.2) ->
-	E_W = 1 / (1 + 10 ** ((R_B - R_W) / 400))
-	win = E_W - draw / 2
-	loss = (1 - E_W) - draw / 2
-	x = _.random 0,1,true
-	index = 2
-	if x < loss + draw then index = 1
-	if x < loss then index = 0
-	index
-
-handleResult = (a,b,pa,pb,key) ->
-	index = '0 1'.indexOf key
-	ch = "012"[index]
-	if pa.res.length == pa.col.length 
-		if ch != _.last pa.res
-			errors.push currentTable
-			print 'errors',errors
-	else
-		if pa.res.length < pa.col.length then pa.res += "012"[index]
-		if pb.res.length < pb.col.length then pb.res += "210"[index]
-	currentTable = (currentTable + 1) %% tournament.pairs.length
-
-fakeInput = ->
-	currentTable = 0 
-	print 'fakeInput1',tournament.persons
-	for i in range tournament.pairs.length
-		[a,b] = tournament.pairs[i]
-		pa = tournament.persons[a]
-		pb = tournament.persons[b]
-		res = elo_probabilities pa.elo, pb.elo
-		if pa.res.length < pa.col.length then pa.res += "012"[res] 
-		if pb.res.length < pb.col.length then pb.res += "210"[res]
-
-	# for p in tournament.persons
-	# 	if not p.active then p.res += '0'
-	print 'fakeInput2',tournament.persons
-
-handleDelete = (pa,pb) ->
-	i = currentTable
-	errors = (e for e in errors when e != i)
-	if pa.res.length == pb.res.length
-		[a,b] = tournament.pairs[i]
-		pa = tournament.persons[a]
-		pb = tournament.persons[b]
-		# b = tournament.pairings[2*i+1]
-
-		pa.res = pa.res.substring 0,pa.res.length-1
-		pb.res = pb.res.substring 0,pb.res.length-1
-	currentTable = (currentTable + 1) %% tournament.pairs.length
+	pages[state].draw()
 
 window.mousePressed = (event) ->
-	if state == 0
-		currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
-		xdraw()
-	if state == 2
-		currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
-		xdraw()
+	pages[state].mousePressed()
+	#xdraw()
 
-fixCanvas = (delta) ->
-	state = (state + delta) %% 3
+setState = (newState) ->
+	state = newState
 	if state == 0 then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
-	if state == 1 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
-	if state == 2 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
+	else resizeCanvas windowWidth-4, (3.5+N) * 0.5 * ZOOM[state]
 
 window.keyPressed = (event) ->
 
-	# print key
-	# print 'round',tournament.round
+	print key
 
-	if state == 0 and tournament.round > 0 # Tables
-		if key == 'Home' then currentTable = 0
-		if key == 'End' then currentTable = tournament.pairs.length - 1
-		if key == 'ArrowUp' 
-			currentTable = (currentTable - 1) %% tournament.pairs.length
-			event.preventDefault()
-		if key == 'ArrowDown'
-			currentTable = (currentTable + 1) %% tournament.pairs.length
-			event.preventDefault()
-		if key in 'pP' then tournament.lotta()
-		if key == 'x' then fakeInput()
-		print 'currentTable',currentTable
-		if 0 <= currentTable < tournament.pairs.length
-			[a,b] = tournament.pairs[currentTable]
-			pa = tournament.persons[a]
-			pb = tournament.persons[b]
-			if key in '0 1' then handleResult a,b,pa,pb,key
-			if key == 'Delete' then handleDelete pa,pb
-	
-	#if state == 1 # Standings
+	# om något resultat saknas för en aktiv spelare, ska ingen lottning ske
+	if key in 'pP'
+		for p in tournament.persons
+			if p.active and p.res.length < p.col.length
+				print 'Pairings kan ej nås pga att resultat saknas för bl a',"#{p}"
+				return 
 
-	if state == 2 # Names
-		if key == 'ArrowUp' 
-			currentPlayer = (currentPlayer - 1) %% N
-			event.preventDefault()
-		if key == 'ArrowDown'
-			currentPlayer = (currentPlayer + 1) %% N
-			event.preventDefault()
-		if key in 'pP' then tournament.lotta()
-		if key in 'zZ' then tournament.playersByName[currentPlayer].toggle()
+	pages[state].keyPressed event,key
 
-	if key == 'Tab'
-		fixCanvas 1		
-		event.preventDefault()
-	if key == 'Enter' then fixCanvas -1
-
-	if key in 'w' then ZOOM[state] += 1
-	if key in 's' then ZOOM[state] -= 1
-	if key in 'W' then ZOOM[state] += 4
-	if key in 'S' then ZOOM[state] -= 4
-	if key in 'wWsS'
-		if state == 0 then resizeCanvas windowWidth-4, (3.5+N//2) * 0.5 * ZOOM[state]
-		if state == 1 then resizeCanvas windowWidth-4, (3.5+N   ) * 0.5 * ZOOM[state]
-
-	xdraw()
+	# xdraw()
