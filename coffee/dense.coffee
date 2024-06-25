@@ -502,9 +502,9 @@ class Tables extends Page
 		@keys = {}
 		@buttons = {}
 		@buttons.t = new Button 'Tables',     280,y,80,h, () => setState 1
-		@buttons.n = new Button 'Names',     80,y,70,h, () => setState 2
+		@buttons.n = new Button 'Names',       80,y,70,h, () => setState 2
 		@buttons.s = new Button 'Standings', 160,y,110,h, () => setState 1
-		@buttons.p = new Button 'Pair',      5,y,65,h, () => setState 3
+		@buttons.p = new Button 'Pair',         5,y,65,h, () => setState 3
 
 		@buttons['1'] = new Button '1',        350+200,y,20,h, () => @handleResult t, '1'
 		@buttons[' '] = new Button '½',        380+200,y,20,h, () => @handleResult t, ' '
@@ -519,8 +519,13 @@ class Tables extends Page
 		@buttons.ArrowDown = new Button '',    10,y,10,h, () =>
 			@currentTable = (@currentTable + 1) %% tournament.pairs.length
 			event.preventDefault()
-		# @buttons.t.active = false
+		@buttons.t.active = false
 		print @buttons
+
+	mousePressed : ->
+		for key of @buttons
+			button = @buttons[key]
+			if button.inside mouseX,mouseY then button.click()
 
 	keyPressed : (event, key)-> 
 		# [a,b] = tournament.pairs[@currentTable]
@@ -540,7 +545,7 @@ class Tables extends Page
 		# if key == 'x' then @fakeInput()
 		#, "1 space=½ 0 delete Standings Names Pair zZ=zoom"
 
-	mousePressed : -> @currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
+	# mousePressed : -> @currentTable = int mouseY / (0.5 * ZOOM[state]) - 2.5
 
 	# keyPressed : (event, key) ->
 	# 	if tournament.round > 0 # Tables
@@ -628,13 +633,13 @@ class Tables extends Page
 			if i % tournament.tpp == tournament.tpp-1 then res.push "\f"
 
 	draw : ->
-		print 'Tables.draw'
+		# print 'Tables.draw'
 		fill 'white'
 		@showHeader 'Tables',tournament.round
 		#@showFooter tournament.pairs.length, "1 space 0 delete Standings Names Pair z Z x"
 		for key of @buttons
 			button = @buttons[key]
-			print key,button
+			# print key,button
 			button.draw()
 
 		y = 1.0 * ZOOM[state]
@@ -686,9 +691,47 @@ class Standings extends Page
 
 	constructor : () ->
 		super()
-		@keys = {}
+		t = tournament
+		y = (14+2.4) * ZOOM[state] * 0.5
+		h = 20
+		# @currentPlayer = 0
+
+		@buttons = {}
+		@buttons.t = new Button 'Tables',     280,y,80,h, () => setState 0
+		@buttons.n = new Button 'Names',       80,y,70,h, () => setState 2
+		@buttons.s = new Button 'Standings', 160,y,110,h, () => setState 1
+		@buttons.p = new Button 'Pair',         5,y,65,h, () => setState 3
+
+		# @buttons[' '] = new Button 'toggle',   500,y,75,h, () => tournament.playersByName[@currentPlayer].toggle()
+		# @buttons.p = new Button 'Pair',        600,y,65,h, () => tournament.lotta()
+		@buttons.z = new Button 'Z',           520+200,y,20,h, () => zoomIn N
+		@buttons.x = new Button 'X',           550+200,y,20,h, () => zoomOut N
+		# @buttons.ArrowUp = new Button '',       10,y,10,h, () =>
+		# 	@currentPlayer = (@currentPlayer - 1) %% N 
+		# 	event.preventDefault()
+		# @buttons.ArrowDown = new Button '',    10,y,10,h, () =>
+		# 	@currentPlayer = (@currentPlayer + 1) %% N 
+		# 	event.preventDefault()
+		@buttons.s.active = false
 
 	mousePressed : ->
+		for key of @buttons
+			button = @buttons[key]
+			if button.inside mouseX,mouseY then button.click()
+
+	keyPressed : (event,key) ->
+		if key == 'ArrowUp'
+			@currentPlayer = (@currentPlayer - 1) %% N
+			event.preventDefault()
+		if key == 'ArrowDown'			
+			@currentPlayer = (@currentPlayer + 1) %% N
+			event.preventDefault()
+
+		if key == 't' then setState 0
+		if key == 's' then setState 1
+		if key == 'p' then setState 3
+		if key == 'z' then zoomIn N//2
+		if key == 'Z' then zoomOut N//2
 
 	keyPressed : (event,key) ->
 		if key == 't' then setState 0
@@ -750,7 +793,7 @@ class Standings extends Page
 		res.push "\f"
 
 	lightbulb : (color, x, y, result, opponent) ->
-		print 'lightbulb',color, x, y, result, opponent
+		# print 'lightbulb',color, x, y, result, opponent
 		if result == "" then return
 		push()
 		result = '012'.indexOf result
@@ -769,7 +812,7 @@ class Standings extends Page
 		fill 'white'
 
 		@showHeader 'Standings',tournament.round-1
-		@showFooter N, "Tables Names Pair z Z"
+		# @showFooter N, "Tables Names Pair z Z"
 
 		if tournament.pairs.length == 0
 			print "This ROUND can't be paired! (Too many rounds)"
@@ -797,7 +840,7 @@ class Standings extends Page
 
 		fill 'black' 
 		for person,i in playersByEloSum
-			print "Standings.draw: #{person}"
+			# print "Standings.draw: #{person}"
 			y += ZOOM[state] * 0.5
 			s = ""
 			s +=       @txtT (1+i).toString(),           3, window.RIGHT
@@ -820,12 +863,41 @@ class Standings extends Page
 				else
 					@lightbulb person.col[r][0], x, y, person.res[r], 1+inv[person.opp[r]]
 
+		for key of @buttons
+			button = @buttons[key]
+			button.draw()
+
 class Names extends Page
 
 	constructor : () ->
 		super()
+		t = tournament
+		y = (14+2.4) * ZOOM[state] * 0.5
+		h = 20
 		@currentPlayer = 0
-		@keys = {}
+
+		@buttons = {}
+		@buttons.t = new Button 'Tables',     280,y,80,h, () => setState 0
+		@buttons.n = new Button 'Names',       80,y,70,h, () => setState 2
+		@buttons.s = new Button 'Standings', 160,y,110,h, () => setState 1
+		@buttons.p = new Button 'Pair',         5,y,65,h, () => setState 3
+
+		# @buttons[' '] = new Button 'toggle',   500,y,75,h, () => tournament.playersByName[@currentPlayer].toggle()
+		# @buttons.p = new Button 'Pair',        600,y,65,h, () => tournament.lotta()
+		@buttons.z = new Button 'Z',           520+200,y,20,h, () => zoomIn N
+		@buttons.x = new Button 'X',           550+200,y,20,h, () => zoomOut N
+		# @buttons.ArrowUp = new Button '',       10,y,10,h, () =>
+		# 	@currentPlayer = (@currentPlayer - 1) %% N 
+		# 	event.preventDefault()
+		# @buttons.ArrowDown = new Button '',    10,y,10,h, () =>
+		# 	@currentPlayer = (@currentPlayer + 1) %% N 
+		# 	event.preventDefault()
+		@buttons.n.active = false
+
+	mousePressed : ->
+		for key of @buttons
+			button = @buttons[key]
+			if button.inside mouseX,mouseY then button.click()
 
 	keyPressed : (event,key) ->
 		if key == 'ArrowUp'
@@ -866,10 +938,10 @@ class Names extends Page
 
 		fill 'white'
 		@showHeader 'Names',tournament.round
-		if tournament.round == 0
-			@showFooter N, "up down Pair z Z"
-		else
-			@showFooter N, "up down Tables Standings Pair z Z"
+		# if tournament.round == 0
+		# 	@showFooter N, "up down Pair z Z"
+		# else
+		# 	@showFooter N, "up down Tables Standings Pair z Z"
 
 		y = 1.0 * ZOOM[state]
 		s = ""
@@ -913,12 +985,42 @@ class Names extends Page
 
 			text s,10,y
 
+		for key of @buttons
+			button = @buttons[key]
+			# print key,button
+			button.draw()
+		
 class Pairings extends Page
 
 	constructor : () ->
 		super()
+		t = tournament
+		y = (14+2.4) * ZOOM[state] * 0.5
+		h = 20
 		@currentPlayer = 0
 		@keys = {}
+		@buttons = {}
+		@buttons.t = new Button 'Tables',     280,y,80,h, () => setState 0
+		@buttons.n = new Button 'Names',       80,y,70,h, () => setState 2
+		@buttons.s = new Button 'Standings', 160,y,110,h, () => setState 1
+		@buttons._ = new Button 'Pair',         5,y,65,h, () => setState 3
+
+		@buttons[' '] = new Button 'toggle',   500,y,75,h, () => tournament.playersByName[@currentPlayer].toggle()
+		@buttons.p = new Button 'Pair',        600,y,65,h, () => tournament.lotta()
+		@buttons.z = new Button 'Z',           520+200,y,20,h, () => zoomIn N//2
+		@buttons.x = new Button 'X',           550+200,y,20,h, () => zoomOut N//2
+		@buttons.ArrowUp = new Button '',       10,y,10,h, () =>
+			@currentPlayer = (@currentPlayer - 1) %% N 
+			event.preventDefault()
+		@buttons.ArrowDown = new Button '',    10,y,10,h, () =>
+			@currentPlayer = (@currentPlayer + 1) %% N 
+			event.preventDefault()
+		@buttons._.active = false
+
+	mousePressed : ->
+		for key of @buttons
+			button = @buttons[key]
+			if button.inside mouseX,mouseY then button.click()
 
 	keyPressed : (event,key) ->
 		if key == 'ArrowUp'
@@ -934,14 +1036,14 @@ class Pairings extends Page
 		if key == 'Enter' then tournament.lotta()
 		if key == 'Escape' then setState 0
 		if key == 'z' then zoomIn N
-		if key == 'Z' then zoomOut N
+		if key == 'x' then zoomOut N
 
-	mousePressed : -> @currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
+	# mousePressed : -> @currentPlayer = int mouseY / (0.5 * ZOOM[state]) - 2.5
 
 	draw : ->
 		fill 'white'
 		@showHeader 'Pairings',tournament.round
-		@showFooter N, "up down space=toggle Enter=pair Esc=leave z Z"
+		# @showFooter N, "up down space=toggle Enter=pair Esc=leave z Z"
 		# else
 		# 	@showFooter N, "up down  Pair Z=paus/activate  W=larger S=smaller  tab=tables enter=standings"
 
@@ -964,6 +1066,10 @@ class Pairings extends Page
 				fill 'black'
 
 			text s,10,y
+
+		for key of @buttons
+			button = @buttons[key]
+			button.draw()
 
 sum = (s) ->
 	res = 0
@@ -1016,7 +1122,8 @@ window.draw = ->
 	pages[state].draw()
 
 window.mousePressed = (event) ->
-	pages[state].mousePressed()
+	# print 'top level mousePressed',mouseX,mouseY
+	pages[state].mousePressed event
 	#xdraw()
 
 setState = (newState) ->

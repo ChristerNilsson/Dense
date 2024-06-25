@@ -9,4 +9,6 @@ export class Button
         fill 'black'
         text @title,@x,@y+@h/2
 
-    inside : (x,y) -> @x - @w/2 < x < @x + @w/2 and @y-@h/2 < y < @y + @h/2
+    inside : (x,y) -> 
+        # print 'inside',x,y,@x,@y,@w,@h
+        @x <= x <= @x + @w and @y <= y <= @y + @h
