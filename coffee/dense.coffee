@@ -12,6 +12,8 @@ NAMES = 1
 STANDINGS = 2
 PAIRINGS = 3
 
+LPP = 14
+
 RINGS = {'b':'•', ' ':' ', 'w':'o'}
 
 print = console.log
@@ -58,7 +60,7 @@ xxx.sort (a,b) ->
 	if diff == 0 then a[1] - b[1] else diff
 assert [[2,1], [3,4], [12,1], [12,2]], xxx	
 assert true, [2] > [12]
-assert true, "2" > "12"s
+assert true, "2" > "12"
 assert false, 2 > 12
 
 # xxx = [[2,1],[12,2],[12,1],[3,4]]
@@ -472,12 +474,12 @@ class Page
 	constructor : ->
 		@buttons = []
 
-	showHeader : (header,round) ->
+	showHeader : (round) ->
 		y = 0.6 * ZOOM[state]
 		textAlign LEFT,CENTER
 		s = ''
 		s += @txtT "#{tournament.title} #{tournament.datum}" ,30, window.LEFT
-		s += ' ' + @txtT header, 15, window.CENTER
+		# s += ' ' + @txtT header, 15, window.CENTER
 		s += ' ' + @txtT 'Round ' + round, 26, window.RIGHT
 		text s,10,y
 
@@ -621,7 +623,7 @@ class Tables extends Page
 
 	draw : ->
 		fill 'white'
-		@showHeader '',tournament.round
+		@showHeader tournament.round
 		for key of @buttons
 			button = @buttons[key]
 			button.draw()
@@ -725,7 +727,7 @@ class Names extends Page
 	draw : ->
 
 		fill 'white'
-		@showHeader '',tournament.round
+		@showHeader tournament.round
 
 		y = 4.0 * ZOOM[state]
 		s = ""
@@ -872,7 +874,7 @@ class Standings extends Page
 		noStroke()
 		fill 'white'
 
-		@showHeader '',tournament.round-1
+		@showHeader tournament.round-1
 
 		# if tournament.pairs.length == 0
 		# 	print "This ROUND can't be paired! (Too many rounds)"
@@ -931,7 +933,10 @@ class Pairings extends Page
 		t = tournament
 		y = 1.3 * ZOOM[state]
 		h = 20
+
+		@offset = 0
 		@currentPlayer = 0
+		@timestamp = 0
 		@buttons = {}
 
 		@buttons.t = new Button 'Tables', 'T = Tables',       () => setState 0
@@ -948,18 +953,39 @@ class Pairings extends Page
 		@buttons.ArrowRight = new Button '', '',    () => setState 0
 
 		@buttons.ArrowUp = new Button '', '',     () =>
-			@currentPlayer = (@currentPlayer - 1) %% N 
+			if @currentPlayer == 0 then return
+			@currentPlayer -= 1
+			if @currentPlayer < @offset then @offset -= LPP
 			event.preventDefault()
 		@buttons.ArrowDown = new Button '','',    () =>
-			@currentPlayer = (@currentPlayer + 1) %% N 
+			if @currentPlayer == N-1 then return
+			@currentPlayer += 1
+			if @currentPlayer >= @offset+LPP then @offset += LPP
+			event.preventDefault()
+
+		@buttons.PageUp = new Button '', '',     () =>
+			if @offset < LPP then return 
+			@offset = @offset - LPP
+			@currentPlayer = @offset
+			event.preventDefault()
+		@buttons.PageDown = new Button '','',    () =>
+			if @offset > N - LPP then return 
+			@offset = @offset + LPP
+			@currentPlayer = @offset
 			event.preventDefault()
 
 		@buttons._.active = false
 		spread @buttons, 0.6*ZOOM[state],y,h
 
+	mouseWheel : (event) ->
+		if event.delta < 0 and @offset > 0 then @offset -= LPP
+		if event.delta > 0 and @offset < N-LPP then @offset += LPP
+		if @currentPlayer < @offset then @currentPlayer += LPP
+		if @currentPlayer >= @offset+LPP then @currentPlayer -= LPP
+
 	mousePressed : -> 
 		if mouseY > 4 * ZOOM[state]
-			@currentPlayer = int mouseY / ZOOM[state] - 4.5
+			@currentPlayer = @offset + int mouseY / ZOOM[state] - 4.5
 		else
 			for key of @buttons
 				button = @buttons[key]
@@ -969,7 +995,7 @@ class Pairings extends Page
 
 	draw : ->
 		fill 'white'
-		@showHeader 'Pairings',tournament.round
+		@showHeader tournament.round
 
 		y = 4.0 * ZOOM[state]
 		s = "State Name"
@@ -978,12 +1004,15 @@ class Pairings extends Page
 
 		fill 'black'
 		r = tournament.round - 1
-		for p,i in tournament.playersByName
+		# for p,i in tournament.playersByName
+		for iRow in range @offset,@offset+LPP
+			if iRow >= tournament.playersByName.length then continue
+			p = tournament.playersByName[iRow]
 			y += ZOOM[state] 
 			s = if p.active then '      ' else ' paus '
 			s += @txtT p.name, 25, window.LEFT
 
-			if i == @currentPlayer
+			if iRow == @currentPlayer
 				fill  'yellow'
 				noStroke()
 				rect 0,y-0.5*ZOOM[state],width, ZOOM[state]
@@ -995,12 +1024,8 @@ class Pairings extends Page
 			button = @buttons[key]
 			button.draw()
 
-zoomIn = (n) ->
-	ZOOM[state]--
-	resizeCanvas windowWidth-4, (4.5+n) * ZOOM[state]
-zoomOut = (n) ->
-	ZOOM[state]++
-	resizeCanvas windowWidth-4, (4.5+n) * ZOOM[state]
+zoomIn  = (n) -> ZOOM[state]--
+zoomOut = (n) -> ZOOM[state]++
 
 sum = (s) ->
 	res = 0
@@ -1032,11 +1057,11 @@ assert [3,2,0,1], invert [2,3,1,0]
 assert [2,3,1,0], invert invert [2,3,1,0]
 
 window.windowResized = -> 
-	if state == 0       then resizeCanvas windowWidth-4, (4.5+N//2) * ZOOM[state]
-	if state in [1,2,3] then resizeCanvas windowWidth-4, (4.5+N   ) * ZOOM[state]
-	# xdraw()
+	resizeCanvas windowWidth, windowHeight-4
+	LPP = height // ZOOM[state] - 4
 
 window.setup = ->
+	createCanvas windowWidth-4,windowHeight-4
 	textFont 'Courier New'
 	# textAlign window.LEFT,window.TOP
 	textAlign CENTER,CENTER
@@ -1053,18 +1078,15 @@ window.draw = ->
 	pages[state].draw()
 
 window.mousePressed = (event) -> pages[state].mousePressed event
-
-setState = (newState) ->
-	state = newState
-	if state == TABLES then resizeCanvas windowWidth-4, (4.5+N//2) * ZOOM[state]
-	else resizeCanvas windowWidth-4, (4.5+N) * ZOOM[state]
+window.mouseWheel = (event) -> pages[state].mouseWheel event
+setState = (newState) -> state = newState
 
 window.keyPressed = (event) ->
 	# om något resultat saknas för en aktiv spelare, ska ingen lottning ske
-	if key in 'pP'
-		for p in tournament.persons
-			if p.active and p.res.length < p.col.length
-				print 'Pairings kan ej nås pga att resultat saknas för bl a',"#{p}"
-				return 
-
+	# if key in 'pP'
+	# 	for p in tournament.persons
+	# 		if p.active and p.res.length < p.col.length
+	# 			print 'Pairings kan ej nås pga att resultat saknas för bl a',"#{p}"
+	# 			return 
 	pages[state].keyPressed event,key
+
