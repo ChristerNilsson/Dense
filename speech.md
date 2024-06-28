@@ -96,11 +96,24 @@ Ture får 900 elos (remi)
 * Berger ger flera vinnare, som ej är jämförbara
 * Berger ger samma poäng för ett vinstparti oavsett spelstyrka.
 
-## Normering av Elo-talet (ej infört, diskussionspunkt)
-* Deltagarnas elo-tal anpassas till intervallet [a,b] så att b=2a.
-* T ex kan Tyresö Opens ELO-tal [1406,2416], justeras till [1010,2020] genom att subtrahera 396.
-* Detta innebär att en vinst i lägsta grupp motsvarar en remi i högsta grupp.
-* Man kan laborera med faktorn 2 ovan för att öka eller minska chansen för lägre ratade att vinna turneringen.
+## Förskjutning av Elo-talet (ej infört, diskussionspunkt)
+* Deltagarnas elo-tal anpassas till intervallet [a,b] så att b=2a
+* T ex kan Tyresö Opens ELO-spread [1406,2416], justeras till [1010,2020] genom att subtrahera 396
+* Detta innebär att en vinst i lägsta grupp motsvarar en remi i högsta grupp
+  * Är det rimligt att en person med 100% mot låga elo, placeras före en person med 50% mot höga elo?
+* Man kan laborera med faktorn 2 ovan för att öka eller minska chansen för lägre ratade att vinna turneringen
+  * Faktorn 3 t ex ger intervallet [505,1515]. Uppnås via subtraktion med 901. Mycket svårare för lågrankade nu
+  * Det kan finnas en optimal faktor, troligen krävs det ett antal turneringar för att hitta en *sweet spot*
+* Kan eventuellt vara intressant att ta medianen/medelvärdet av de 10% lägsta/högsta deltagarna
+
+## Citat
+
+*Personligen - som patzer - tycker jag det vore skönt att slippa sitta fast i Schweizerhissen i öppna turneringar* - Ingemar Falk  
+*ELO Pairings is a system for both patzers and masters* - Christer Nilsson  
+*Inom boxning skulle man aldrig tillåta en tungviktare att krossa en flugviktare. Inom schack anses det vara en förmån.* - Christer Nilsson  
+
+[Thoughts on replacing Swiss system tournaments](https://www.chess.com/forum/view/general/thoughts-on-replacing-swiss-system-tournaments-with-mcmahon)
+
 
 ## Referenser
 
