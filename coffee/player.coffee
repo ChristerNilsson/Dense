@@ -13,7 +13,7 @@ export class Player
 	eloSum : -> 
 		summa = 0
 		for i in range @res.length
-			if @opp[i] != -1 then summa += normera(g.tournament.persons[@opp[i]].elo) * g.tournament.bonus[@col[i] + @res[i]] 
+			if @opp[i] != -1 then summa += g.normera(g.tournament.persons[@opp[i]].elo) * g.tournament.bonus[@col[i] + @res[i]] 
 		summa
 
 	avgEloDiff : ->

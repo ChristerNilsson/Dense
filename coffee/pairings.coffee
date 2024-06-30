@@ -5,63 +5,37 @@ import { Lista } from './lista.js'
 
 export class Pairings extends Page
 
-	constructor : () ->
+	constructor : ->
 		super()
-		t = g.tournament
-		y = 1.3 * g.ZOOM[g.state]
-		h = 20
+		@t = g.tournament
+		@y = 1.3 * g.ZOOM[g.state]
+		@h = 20
+		@lista = new Lista
 
-		@lista = new Lista t.playersByName, "Pause Name", (p) ->
-			s = if p.active then '      ' else 'pause '
-			s + g.txtT p.name, 25, window.LEFT
+		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.STANDINGS
+		@buttons.ArrowRight = new Button '', '', () => g.setState g.TABLES
 
-		@timestamp = 0
-		@buttons = {}
-
-		@buttons.t = new Button 'Tables', 'T = Tables',       () => g.setState 0
-		@buttons.n = new Button 'Names',  'N = Names',        () => g.setState 1
-		@buttons.s = new Button 'Standings', 'S = Standings', () => g.setState 2
-		@buttons._ = new Button 'Pairings',     'Pair',       () => g.setState 3 #
-
-		@buttons[' '] = new Button 'toggle',  'space = Toggles paused/active', () => t.playersByName[g.pages[g.state].lista.currentRow].toggle()
-
-		@buttons.p = new Button 'Pair',     'P = Perform pairing',   () => t.lotta()
-		@buttons.i = new Button 'I',        'I = zoom In',    () => g.zoomIn g.N//2
-		@buttons.o = new Button 'O',        'O = zoom Out',   () => g.zoomOut g.N//2
-
-		@buttons.ArrowLeft  = new Button '', '',    () => g.setState 2
-		@buttons.ArrowRight = new Button '', '',    () => g.setState 0
-
-		@buttons.ArrowUp = new Button '', '',     () => @lista.ArrowUp()
-		@buttons.ArrowDown = new Button '','',    () => @lista.ArrowDown()
-
-		@buttons.PageUp = new Button '', '',     () => @lista.PageUp()
-		@buttons.PageDown = new Button '','',    () => @lista.PageDown()
+		@buttons.p = new Button 'Pair', 'P = Perform pairing', () => @t.lotta()
+		@buttons[' '] = new Button 'toggle', 'space = Toggle pause/active', 
+			() => @t.playersByName[g.pages[g.state].lista.currentRow].toggle()
 
 		@buttons._.active = false
-		spread @buttons, 0.6*g.ZOOM[g.state],y,h
+		@setLista()
+
+	setLista : ->
+		@lista = new Lista @t.playersByName, "Pause Name", @buttons, (p) ->
+			s = if p.active then '      ' else 'pause '
+			s + g.txtT p.name, 25, window.LEFT
+		spread @buttons, 0.6*g.ZOOM[g.state],@y,@h
 
 	draw : ->
 		fill 'white'
-		@showHeader g.tournament.round
-
+		@showHeader @t.round
 		@lista.draw()
-
 		for key of @buttons
 			button = @buttons[key]
 			button.draw()
 
 	mouseWheel : (event )-> @lista.mouseWheel event
-	mousePressed : (event) -> 
-		if mouseY < 4 * g.ZOOM[g.state]
-			print 'pressed',mouseY,4 * g.ZOOM[g.state]
-			print '@buttons',@buttons
-			for key of @buttons
-				button = @buttons[key]
-				print button.title
-				if button.inside mouseX,mouseY then button.click()
-		else
-			@lista.mousePressed event
-
+	mousePressed : (event) -> @lista.mousePressed event
 	keyPressed : (event) -> @buttons[key].click()
-

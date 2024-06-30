@@ -1,6 +1,7 @@
 import { g, range, print } from './globals.js' 
 import { parseExpr } from './parser.js'
 import { Player } from './player.js'
+import { Edmonds } from './mattkrick.js' 
 
 export class Tournament 
 	constructor : () ->
@@ -33,11 +34,11 @@ export class Tournament
 			for b in range a+1,g.N+1
 				pb = @persons[b]
 				if not pb.active then continue
-				if DIFF == 'ELO' then diff = abs pa.elo - pb.elo
-				if DIFF == 'ID'  then diff = abs pa.id - pb.id
-				if COST == 'LINEAR'    then cost = 2000 - diff
-				if COST == 'QUADRATIC' then cost = 2000 - diff ** 1.01
-				if ok pa,pb then edges.push [pa.id,pb.id,cost]
+				if g.DIFF == 'ELO' then diff = abs pa.elo - pb.elo
+				if g.DIFF == 'ID'  then diff = abs pa.id - pb.id
+				if g.COST == 'LINEAR'    then cost = 2000 - diff
+				if g.COST == 'QUADRATIC' then cost = 2000 - diff ** 1.01
+				if g.ok pa,pb then edges.push [pa.id,pb.id,cost]
 		edges
 	
 	findSolution : (edges) -> 
@@ -101,7 +102,7 @@ export class Tournament
 				pa = @persons[a]
 				pb = @persons[b]
 				col1 = "bw"[i%2]
-				col0 = other col1
+				col0 = g.other col1
 				pa.col += col0
 				pb.col += col1
 				if i%2==1 then @pairs[i].reverse()
@@ -120,8 +121,6 @@ export class Tournament
 			pb.chair = 2*i + 1
 
 	lotta : () ->
-
-		#print @players
 
 		@preMatch()
 
@@ -153,10 +152,14 @@ export class Tournament
 
 		downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
 		start = new Date()
+		downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
 		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt"
-		downloadFile tournament.makeStandardFile(), "#{@title} R#{@round}.txt"
 		# downloadFile @makeEdges(), "R#{@round} Net.txt"
 		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
+
+		g.pages[g.STANDINGS].setLista()
+		g.pages[g.NAMES].setLista()
+		g.pages[g.TABLES].setLista()
 
 		@round += 1
 		g.state = 0
@@ -258,12 +261,12 @@ export class Tournament
 		header1 = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 
 		if @round > 0 
-			pages[1].make header0,res
+			g.pages[1].make header0,res
 		if @round < @rounds 
 			# @makeNames header1,players,res
 			# @makeTables header1,res
-			pages[2].make header1,players,res
-			pages[0].make header1,res
+			g.pages[2].make header1,players,res
+			g.pages[0].make header1,res
 
 		res.join "\n"	
 
