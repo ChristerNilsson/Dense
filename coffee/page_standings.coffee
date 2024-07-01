@@ -1,4 +1,4 @@
-import { g,print,range } from './globals.js' 
+import { g,print,range,scale } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js'  
 import { Lista } from './lista.js' 
@@ -7,14 +7,15 @@ export class Standings extends Page
 
 	constructor : ->
 		super()
-		@t = g.tournament
-		@y = 1.3 * g.ZOOM[g.state]
-		@h = 20
-		@lista = new Lista
+		# @t = g.tournament
+		# @y = 1.3
+		# @h = 1
+		# @lista = new Lista
+
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.NAMES
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.ACTIVE
 		@buttons.s.active = false
-		spread @buttons, 0.6 * g.ZOOM[g.state], @y, @h
+		# spread @buttons, 0.6 * g.ZOOM[g.state], @y, @h
 
 	setLista : ->
 
@@ -56,6 +57,7 @@ export class Standings extends Page
 				else @lightbulb p.col[r], x, @y, p.res.slice(r,r+1), 1 + p.opp[r]
 			s
 		@lista.paintYellowRow = false
+		spread @buttons, 10, @y, @h
 
 	mouseWheel   : (event )-> @lista.mouseWheel event
 	mousePressed : (event) -> @lista.mousePressed event
@@ -80,7 +82,6 @@ export class Standings extends Page
 		pop()			
 
 	make : (header,res) ->
-		return
 		if @t.pairs.length == 0 then res.push "This ROUND can't be paired! (Too many rounds)"
 
 		temp = _.clone @t.persons

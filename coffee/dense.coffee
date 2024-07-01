@@ -23,17 +23,6 @@ g.pages = []
 resultat = [] # 012 sorterad på id
 message = '' #This is a tutorial g.tournament. Use it or edit the URL'
 
-downloadFile = (txt,filename) ->
-	blob = new Blob [txt], { type: 'text/plain' }
-	url = URL.createObjectURL blob
-	a = document.createElement 'a'
-	a.href = url
-	a.download = filename
-	document.body.appendChild a
-	a.click()
-	document.body.removeChild a
-	URL.revokeObjectURL url
-
 window.windowResized = -> 
 	resizeCanvas windowWidth, windowHeight-4
 	g.LPP = height // g.ZOOM[g.state] - 4

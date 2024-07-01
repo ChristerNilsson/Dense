@@ -1,4 +1,4 @@
-import { g,print,range } from './globals.js' 
+import { g,print,range,scale } from './globals.js' 
 
 export class Player
 	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> 
@@ -14,7 +14,7 @@ export class Player
 	eloSum : => 
 		if g.tournament.round == 0 then return 0
 		summa = 0
-		for r in range g.tournament.round - 1
+		for r in range g.tournament.round # - 1
 			if @opp[r] != -1 then summa += g.tournament.persons[@opp[r]].elo * g.tournament.bonus[@col[r] + @res[r]] 
 		summa
 

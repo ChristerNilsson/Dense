@@ -1,4 +1,4 @@
-import { g,print,range } from './globals.js' 
+import { g,print,range,scale } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js' 
 import { Lista } from './lista.js' 
@@ -7,10 +7,6 @@ export class Active extends Page
 
 	constructor : ->
 		super()
-		@t = g.tournament
-		@y = 1.3 * g.ZOOM[g.state]
-		@h = 20
-		@lista = new Lista
 
 		@buttons.t.active = false
 		@buttons.n.active = false
@@ -33,7 +29,7 @@ export class Active extends Page
 		@lista = new Lista @t.playersByName, "Pause Name", @buttons, (p) ->
 			s = if p.active then '      ' else 'pause '
 			s + g.txtT p.name, 25, window.LEFT
-		spread @buttons, 0.6*g.ZOOM[g.state],@y,@h
+		spread @buttons, 10, @y, @h
 
 	draw : ->
 		fill 'white'

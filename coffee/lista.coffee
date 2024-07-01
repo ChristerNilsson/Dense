@@ -1,4 +1,4 @@
-import { g,print,range } from './globals.js' 
+import { g,print,range,scale } from './globals.js' 
 
 export class Lista
 	constructor : (@objects=[], @columnTitles="", @buttons={}, @drawFunction=null) -> # a list of players. Or a list of pairs of players
@@ -8,31 +8,29 @@ export class Lista
 		@paintYellowRow = true
 
 	draw : -> # ritar de rader som syns i fönstret enbart
-
-		y = 4.0 * g.ZOOM[g.state]
+		y = 4
 		s = @columnTitles
 		textAlign window.LEFT
-		text s,10,y
+		text s,10,scale(y)
 
 		fill 'black'
 		r = g.tournament.round - 1
 		for iRow in range @offset,@offset + g.LPP
 			if iRow >= @N then continue
 			p = @objects[iRow]
-			y += g.ZOOM[g.state] 
+			y++
 			s = @drawFunction p, iRow
 			if iRow == @currentRow
 				fill 'yellow'
-				# noStroke()
-				w = if @paintYellowRow then width else 23.4 * g.ZOOM[g.state]
-				rect 0, y - 0.5 * g.ZOOM[g.state]-1, w, g.ZOOM[g.state]
+				w = if @paintYellowRow then width else scale(23.4)
+				rect 0, scale(y - 0.5), w, scale(1)
 				fill 'black'
-			text s,10,y
+			text s,10, scale(y)
 
 	keyPressed : (event, key) -> @buttons[key].click()
 	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
 	mousePressed : -> 
-		if mouseY > 4 * g.ZOOM[g.state]
+		if mouseY > scale(4)
 			@currentRow = @offset + int mouseY / g.ZOOM[g.state] - 4.5
 		else
 			for key,button of @buttons

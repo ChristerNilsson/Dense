@@ -6,6 +6,7 @@ import { Active } from './page_active.js'
 
 export print = console.log
 export range = _.range
+export scale = (x) -> x * g.ZOOM[g.state]
 
 export g = {}
 
@@ -43,8 +44,8 @@ assert "123", g.res2string [1,2,3]
 assert "1", g.res2string [1]
 assert "", g.res2string []
 
-g.zoomIn  = (n) -> g.ZOOM[g.state]--
-g.zoomOut = (n) -> g.ZOOM[g.state]++
+g.zoomIn  = (n) -> g.ZOOM[g.state]++
+g.zoomOut = (n) -> g.ZOOM[g.state]--
 g.setState = (newState) -> g.state = newState
 
 g.invert = (arr) ->

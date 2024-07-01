@@ -1,5 +1,6 @@
-import { g,print,range } from './globals.js' 
+import { g,print,range,scale } from './globals.js' 
 import { Button,spread } from './button.js' 
+import { Lista } from './lista.js' 
 
 export class Page
  
@@ -23,14 +24,19 @@ export class Page
 		@buttons.i = new Button 'In', 'I = zoom In', () => g.zoomIn g.N//2
 		@buttons.o = new Button 'Out', 'O = zoom Out', () => g.zoomOut g.N//2
 
+		@t = g.tournament
+		@y = 1.3
+		@h = 1
+		@lista = new Lista
+
 	showHeader : (round) ->
-		y = 0.6 * g.ZOOM[g.state]
+		y = 0.6 # * g.ZOOM[g.state]
 		textAlign LEFT,CENTER
 		s = ''
 		s += g.txtT "#{g.tournament.title} #{g.tournament.datum}" , 30, window.LEFT
 		s += g.txtT "#{g.message}" , 30, window.CENTER
 		s += ' ' + g.txtT 'Round ' + round, 12, window.RIGHT
-		text s,10,y
+		text s,10,scale(y)
 
 	txt : (value, x, y, align=null, color=null) ->
 		push()

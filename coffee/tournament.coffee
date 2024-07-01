@@ -1,4 +1,4 @@
-import { g, range, print } from './globals.js' 
+import { g, range, print,scale } from './globals.js' 
 import { parseExpr } from './parser.js'
 import { Player } from './player.js'
 import { Edmonds } from './mattkrick.js' 
@@ -118,6 +118,17 @@ export class Tournament
 			pa.chair = 2*i
 			pb.chair = 2*i + 1
 
+	downloadFile : (txt,filename) ->
+		blob = new Blob [txt], { type: 'text/plain' }
+		url = URL.createObjectURL blob
+		a = document.createElement 'a'
+		a.href = url
+		a.download = filename
+		document.body.appendChild a
+		a.click()
+		document.body.removeChild a
+		URL.revokeObjectURL url
+
 	lotta : () ->
 
 		g.calcMissing()
@@ -158,9 +169,10 @@ export class Tournament
 
 		print 'yyy',@persons
 
-		downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
+		@downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
 		start = new Date()
-		downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
+		@downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
+
 		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt"
 		# downloadFile @makeEdges(), "R#{@round} Net.txt"
 		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
@@ -170,9 +182,8 @@ export class Tournament
 		@round += 1
 		g.pages[g.STANDINGS].setLista()
 
-		print 'lotta round',@round
+		print 'lotta round', @round
 		g.state = g.TABLES
-		#xdraw()
 
 	fetchURL : (url = location.search) ->
 		if url == '' then window.location.href = "https://github.com/ChristerNilsson/Dense/blob/main/README.md"
@@ -266,16 +277,12 @@ export class Tournament
 		players = _.sortBy players, (p) -> p[0].name
 
 		timestamp = new Date().toLocaleString('se-SE').slice 0,16
-		header0 = " for " + @title + " after Round #{@round}    #{timestamp}"
-		header1 = " for " + @title + " in Round #{@round+1}    #{timestamp}"
+		header_after = " for " + @title + " after Round #{@round}    #{timestamp}"
+		header_in    = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 
-		if @round > 0 
-			g.pages[1].make header0,res
-		if @round < @rounds 
-			# @makeNames header1,players,res
-			# @makeTables header1,res
-			g.pages[2].make header1,players,res
-			g.pages[0].make header1,res
+		if @round < @rounds then g.pages[g.STANDINGS].make header_after,res
+		if @round >= 0      then g.pages[g.NAMES].make header_in,players,res
+		if @round < @rounds then g.pages[g.TABLES].make header_in,res
 
 		res.join "\n"	
 
