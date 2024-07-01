@@ -74,11 +74,9 @@ export class Tournament
 
 	preMatch : ->
 		for p in @persons
-			# if not p.active
 			if p.res.length < p.col.length then p.res += '0'
 
 		active = _.filter @persons.slice(0,@persons.length-1), (p) -> p.active
-		print 'preMatch',active
 		@persons[g.N].active = active.length % 2 == 1
 
 	postMatch : ->
@@ -122,6 +120,16 @@ export class Tournament
 
 	lotta : () ->
 
+		g.calcMissing()
+
+		if @round > 0 
+			missing = 0
+			for p in @persons
+				if p.active and p.res.length < p.col.length then missing++
+			if missing > 0
+				print 'lottning ej genomförd!'
+				return
+
 		@preMatch()
 
 		print 'Lottning av rond ',@round
@@ -157,12 +165,13 @@ export class Tournament
 		# downloadFile @makeEdges(), "R#{@round} Net.txt"
 		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
 
-		g.pages[g.STANDINGS].setLista()
 		g.pages[g.NAMES].setLista()
 		g.pages[g.TABLES].setLista()
-
 		@round += 1
-		g.state = 0
+		g.pages[g.STANDINGS].setLista()
+
+		print 'lotta round',@round
+		g.state = g.TABLES
 		#xdraw()
 
 	fetchURL : (url = location.search) ->

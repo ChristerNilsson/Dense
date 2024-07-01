@@ -23,29 +23,25 @@ export class Lista
 			s = @drawFunction p, iRow
 			if iRow == @currentRow
 				fill 'yellow'
-				noStroke()
-				if @paintYellowRow
-					rect 0, y - 0.5 * g.ZOOM[g.state], width, g.ZOOM[g.state]
-				else
-					rect 0, y - 0.5 * g.ZOOM[g.state], 0.45*width, g.ZOOM[g.state]
+				# noStroke()
+				w = if @paintYellowRow then width else 23.4 * g.ZOOM[g.state]
+				rect 0, y - 0.5 * g.ZOOM[g.state]-1, w, g.ZOOM[g.state]
 				fill 'black'
 			text s,10,y
 
-	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP else g.LPP
-
+	keyPressed : (event, key) -> @buttons[key].click()
+	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
 	mousePressed : -> 
 		if mouseY > 4 * g.ZOOM[g.state]
 			@currentRow = @offset + int mouseY / g.ZOOM[g.state] - 4.5
 		else
 			for key,button of @buttons
-				if button.inside mouseX,mouseY then button.click()
-
-	keyPressed : (event, key) -> @buttons[key].click()
+				if button.active and button.inside mouseX,mouseY then button.click()
 
 	ArrowUp   : -> @move -1
 	ArrowDown : -> @move 1
-	PageUp    : -> @move -g.LPP 
-	PageDown  : -> @move g.LPP
+	PageUp    : -> @move -g.LPP//2 
+	PageDown  : -> @move g.LPP//2
 	Home      : -> @move -@currentRow
 	End       : -> @move @N - @currentRow
 

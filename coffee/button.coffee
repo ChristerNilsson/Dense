@@ -1,3 +1,5 @@
+import { g,print,range } from './globals.js' 
+
 export class Button
 	constructor : (@title, @help, @click) -> @active = true
 
@@ -5,7 +7,7 @@ export class Button
 		textAlign CENTER,CENTER
 		if @title == '' then return
 
-		fill if @active then 'lightgray' else 'yellow'
+		fill if @active then 'yellow' else 'lightgray'
 		rect @x,@y,@w,@h
 
 		fill 'black'
@@ -17,10 +19,9 @@ export class Button
 
 export spread = (buttons, letterWidth, y, h) ->
 	x = 0.5 * letterWidth
-	for key of buttons
-		button = buttons[key]
+	for key,button of buttons
 		button.x = x
 		button.y = y
 		button.w = (button.title.length + 0.5) * letterWidth
 		button.h = h
-		x += button.w + letterWidth
+		if button.title.length > 0 or key == "ArrowUp" then x += button.w + letterWidth

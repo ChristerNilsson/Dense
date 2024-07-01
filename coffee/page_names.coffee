@@ -1,7 +1,7 @@
 import { g,print,range } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js' 
-import { Lista } from './lista.js' 
+import { Lista } from './lista.js'  
 
 export class Names extends Page
 
@@ -39,7 +39,7 @@ export class Names extends Page
 
 		res.push "NAMES" + header
 		res.push ""
-		r = g.tournament.round
+		r = @t.round
 		for p,i in players
 			if i % @ppp == 0 then res.push "Table Name"
 			res.push "#{str(1 + p[1]//2).padStart(3)} #{RINGS[p[0].col[r][0]]} #{p[0].name} #{p[0].position}" 
@@ -48,9 +48,8 @@ export class Names extends Page
 
 	draw : ->
 		fill 'white'
-		@showHeader g.tournament.round
+		@showHeader @t.round
 
 		@lista.draw()
-		for key of @buttons
-			button = @buttons[key]
+		for key,button of @buttons
 			button.draw()

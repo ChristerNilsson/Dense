@@ -1,11 +1,11 @@
 import { g,print,range } from './globals.js' 
 import { Page } from './page.js' 
-import { Button,spread } from './button.js' 
+import { Button,spread } from './button.js'  
 import { Lista } from './lista.js' 
 
 export class Tables extends Page
 
-	constructor : () ->
+	constructor : ->
 		super()
 		@t = g.tournament
 		@y = 1.3 * g.ZOOM[g.state]
@@ -13,14 +13,15 @@ export class Tables extends Page
 		@errors = []
 		@lista = new Lista
 
-		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.PAIRINGS
+		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.ACTIVE
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.NAMES
 
-		@buttons.K1     = new Button '1',   '1 = White Win',          () => @handleResult '1'
-		@buttons[' ']   = new Button '½',   'space = Draw',           () => @handleResult ' '
-		@buttons.K0     = new Button '0',   '0 = White Loss',         () => @handleResult '0'
-		@buttons.Delete = new Button 'Del', 'delete = Remove result', () => @handleDelete()
-		@buttons.r      = new Button 'R',   'R = Random results',     () => @randomResult()
+		@buttons.p      = new Button 'Pair','P = Perform pairing now',   () => @t.lotta()
+		@buttons.K1     = new Button '1',      '1 = White Win',          () => @handleResult '1'
+		@buttons[' ']   = new Button '½',      'space = Draw',           () => @handleResult ' '
+		@buttons.K0     = new Button '0',      '0 = White Loss',         () => @handleResult '0'
+		@buttons.Delete = new Button 'Delete', 'delete = Remove result', () => @handleDelete()
+		@buttons.r      = new Button 'Random', 'R = Random results',     () => @randomResult()
 
 		@buttons.t.active = false
 
@@ -35,20 +36,9 @@ export class Tables extends Page
 		header += ' ' + g.txtT 'Elo',    4,window.RIGHT
 
 		@lista = new Lista @t.pairs, header, @buttons, (pair,index) =>
-			# s = if p.active then '      ' else 'pause '
-			# s + g.txtT p.name, 25, window.LEFT
-
-			# print pair,index
-
-			# return pair
-
 			[a,b] = pair
-			# print 'lista',a,b
 			pa = @t.persons[a]
 			pb = @t.persons[b]
-			# y += g.ZOOM[g.state]
-			# sa = g.myRound pa.score(), 1
-			# sb = g.myRound pb.score(), 1
 			both = if pa.res.length == pa.col.length then g.prBoth _.last(pa.res) else "   -   "
 
 			nr = index + 1
@@ -62,6 +52,7 @@ export class Tables extends Page
 			s
 
 		spread @buttons, 0.6 * g.ZOOM[g.state], @y, @h
+		g.calcMissing()
 
 	mouseWheel   : (event )-> @lista.mouseWheel event
 	mousePressed : (event) -> @lista.mousePressed event
@@ -70,24 +61,10 @@ export class Tables extends Page
 	draw : ->
 		fill 'white'
 		@showHeader @t.round
+
 		for key,button of @buttons
 			button.draw()
 		@lista.draw()
-
-		# y = 4.0 * g.ZOOM[g.state]
-		# textAlign window.LEFT
-		# text s,10,y
-
-		# for i in range g.tournament.pairs.length
-
-			# if i == @currentTable
-			# 	fill  'yellow'
-			# 	noStroke()
-			# 	rect 0, y-0.6 * g.ZOOM[g.state], width, g.ZOOM[g.state]
-			# 	fill 'black'
-			# else
-			# 	if i in g.errors then fill 'red' else fill 'black'
-			# text s,10,y
 
 	elo_probabilities : (R_W, R_B, draw=0.2) ->
 		E_W = 1 / (1 + 10 ** ((R_B - R_W) / 400))
@@ -112,6 +89,7 @@ export class Tables extends Page
 		else
 			if pa.res.length < pa.col.length then pa.res += "012"[index]
 			if pb.res.length < pb.col.length then pb.res += "210"[index]
+		g.calcMissing()
 		@lista.currentRow = (@lista.currentRow + 1) %% @t.pairs.length
 
 	randomResult : ->
@@ -122,6 +100,7 @@ export class Tables extends Page
 			res = @elo_probabilities pa.elo, pb.elo
 			if pa.res.length < pa.col.length then pa.res += "012"[res] 
 			if pb.res.length < pb.col.length then pb.res += "210"[res]
+		g.calcMissing()
 
 	handleDelete : ->
 		i = @lista.currentRow
@@ -136,15 +115,16 @@ export class Tables extends Page
 			pa.res = pa.res.substring 0,pa.res.length-1
 			pb.res = pb.res.substring 0,pb.res.length-1
 		@lista.currentRow = (@lista.currentRow + 1) %% @t.pairs.length
+		g.calcMissing()
 
 	make : (header,res) ->
 		res.push "TABLES" + header
 		res.push ""
-		for i in range g.tournament.pairs.length
-			[a,b] = g.tournament.pairs[i]
-			if i % g.tournament.tpp == 0 then res.push "Table      #{g.RINGS.w}".padEnd(25) + _.pad("",28+10) + "#{g.RINGS.b}" #.padEnd(25)
-			pa = g.tournament.persons[a]
-			pb = g.tournament.persons[b]
+		for i in range @t.pairs.length
+			[a,b] = @t.pairs[i]
+			if i % @t.tpp == 0 then res.push "Table      #{g.RINGS.w}".padEnd(25) + _.pad("",28+10) + "#{g.RINGS.b}" #.padEnd(25)
+			pa = @t.persons[a]
+			pb = @t.persons[b]
 			res.push ""
 			res.push _.pad(i+1,6) + pa.elo + ' ' + g.txtT(pa.name, 25, window.LEFT) + ' ' + _.pad("|____| - |____|",20) + ' ' + pb.elo + ' ' + g.txtT(pb.name, 25, window.LEFT)
-			if i % g.tournament.tpp == g.tournament.tpp-1 then res.push "\f"
+			if i % @t.tpp == @t.tpp-1 then res.push "\f"

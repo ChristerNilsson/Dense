@@ -3,7 +3,7 @@ import { Page } from './page.js'
 import { Button,spread } from './button.js' 
 import { Lista } from './lista.js' 
 
-export class Pairings extends Page
+export class Active extends Page 
 
 	constructor : ->
 		super()
@@ -12,14 +12,21 @@ export class Pairings extends Page
 		@h = 20
 		@lista = new Lista
 
+		@buttons.t.active = false
+		@buttons.n.active = false
+		@buttons.s.active = false
+
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.STANDINGS
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.TABLES
-
-		@buttons.p = new Button 'Pair', 'P = Perform pairing', () => @t.lotta()
-		@buttons[' '] = new Button 'toggle', 'space = Toggle pause/active', 
+		@buttons.p          = new Button 'Pair','P = Perform pairing now', () => 
+			@buttons.t.active = true
+			@buttons.n.active = true
+			@buttons.s.active = true
+			@t.lotta()
+		@buttons[' ']       = new Button 'toggle', 'space = pause/activate', 
 			() => @t.playersByName[g.pages[g.state].lista.currentRow].toggle()
 
-		@buttons._.active = false
+		@buttons.a.active = false
 		@setLista()
 
 	setLista : ->
@@ -32,10 +39,9 @@ export class Pairings extends Page
 		fill 'white'
 		@showHeader @t.round
 		@lista.draw()
-		for key of @buttons
-			button = @buttons[key]
+		for key,button of @buttons
 			button.draw()
 
 	mouseWheel : (event )-> @lista.mouseWheel event
 	mousePressed : (event) -> @lista.mousePressed event
-	keyPressed : (event) -> @buttons[key].click()
+	keyPressed : (event) -> if @buttons[key].active or key in ['p',' '] then @buttons[key].click()

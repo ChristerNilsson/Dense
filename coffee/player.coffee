@@ -1,19 +1,21 @@
 import { g,print,range } from './globals.js' 
 
 export class Player
-	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> @active = true
+	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> 
+		@active = true
+		# @t = g.tournament
+
 	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
 
 	toggle : -> 
 		@active = not @active
-		print 'toggle1', g.tournament.persons
 		g.tournament.paused = (p.id for p in g.tournament.persons when not p.active)
-		print 'toggle2',g.tournament.paused
 
-	eloSum : -> 
+	eloSum : => 
+		if g.tournament.round == 0 then return 0
 		summa = 0
-		for i in range @res.length
-			if @opp[i] != -1 then summa += g.normera(g.tournament.persons[@opp[i]].elo) * g.tournament.bonus[@col[i] + @res[i]] 
+		for r in range g.tournament.round - 1
+			if @opp[r] != -1 then summa += g.tournament.persons[@opp[r]].elo * g.tournament.bonus[@col[r] + @res[r]] 
 		summa
 
 	avgEloDiff : ->
