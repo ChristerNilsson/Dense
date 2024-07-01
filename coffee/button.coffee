@@ -1,4 +1,4 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 
 export class Button
 	constructor : (@title, @help, @click) -> @active = true
@@ -8,17 +8,17 @@ export class Button
 		if @title == '' then return
 
 		fill if @active then 'yellow' else 'lightgray'
-		rect scale(@x/20),scale(@y),scale(@w/20),scale(@h)
+		rect scalex(@x),scaley(@y),scalex(@w),scaley(@h)
 
 		fill 'black'
-		text @title,scale((@x+@w/2)/20),scale(@y+@h/2)
+		text @title,scalex(@x+@w/2),scaley(@y+@h/2)
 		textAlign LEFT,CENTER
-		if @inside mouseX,mouseY then text @help,10,scale(@y+3.2*@h/2)
+		if @inside mouseX,mouseY then text @help,10,scaley(@y+3.2*@h/2)
 
-	inside : (x,y) -> scale(@x/20) <= x <= scale((@x + @w)/20) and scale(@y) <= y <= scale(@y + @h)
+	inside : (x,y) -> scalex(@x) <= x <= scalex(@x + @w) and scaley(@y) <= y <= scaley(@y + @h)
 
 export spread = (buttons, letterWidth, y, h) ->
-	x = letterWidth #* 0.5
+	x = letterWidth
 	for key,button of buttons
 		button.x = x
 		button.y = y

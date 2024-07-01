@@ -6,7 +6,8 @@ import { Active } from './page_active.js'
 
 export print = console.log
 export range = _.range
-export scale = (x) -> x * g.ZOOM[g.state]
+export scalex = (x) -> x * g.ZOOM[g.state] / 20
+export scaley = (y) -> y * g.ZOOM[g.state]
 
 export g = {}
 
@@ -111,5 +112,3 @@ g.txtT = (value, w, align=window.CENTER) ->
 	res
 
 g.prBoth = (score) -> " #{'0½1'[score]} - #{'1½0'[score]} "
-
-#assert "   Sven   ", txtT "Sven",10

@@ -1,4 +1,4 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js'  
 import { Lista } from './lista.js' 
@@ -7,12 +7,6 @@ export class Tables extends Page
 
 	constructor : ->
 		super()
-
-		# @t = g.tournament
-		# @y = 1.3
-		# @h = 1
-		# @lista = new Lista
-
 		@errors = []
 
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.ACTIVE
@@ -26,8 +20,6 @@ export class Tables extends Page
 		@buttons.r      = new Button 'Random', 'R = Random results',     () => @randomResult()
 
 		@buttons.t.active = false
-
-		print @buttons
 
 		@setLista()
 
@@ -57,7 +49,6 @@ export class Tables extends Page
 			s += ' ' + g.txtT pb.elo.toString(), 4, window.RIGHT
 			s
 
-		# spread @buttons, 0.6 * g.ZOOM[g.state], @y, @h
 		spread @buttons, 10, @y, @h
 
 		g.calcMissing()
@@ -124,7 +115,7 @@ export class Tables extends Page
 		@lista.currentRow = (@lista.currentRow + 1) %% @t.pairs.length
 		g.calcMissing()
 
-	make : (header,res) ->
+	make : (res,header) ->
 		res.push "TABLES" + header
 		res.push ""
 		for i in range @t.pairs.length

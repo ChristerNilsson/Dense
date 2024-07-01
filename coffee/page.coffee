@@ -1,10 +1,12 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 import { Button,spread } from './button.js' 
 import { Lista } from './lista.js' 
 
 export class Page
  
 	constructor : ->
+
+		@HELP = "Available keys: Up Down Left Right PgUp PgDn Home End a i n o p r s t 1 Space 0 Delete"
 		@buttons = {}
 
 		@buttons.t = new Button 'Tables', 'T = Tables',       () => g.setState g.TABLES
@@ -30,13 +32,13 @@ export class Page
 		@lista = new Lista
 
 	showHeader : (round) ->
-		y = 0.6 # * g.ZOOM[g.state]
+		y = 0.6
 		textAlign LEFT,CENTER
 		s = ''
-		s += g.txtT "#{g.tournament.title} #{g.tournament.datum}" , 30, window.LEFT
+		s += g.txtT "#{g.tournament.title} #{g.tournament.datum}", 30, window.LEFT
 		s += g.txtT "#{g.message}" , 30, window.CENTER
 		s += ' ' + g.txtT 'Round ' + round, 12, window.RIGHT
-		text s,10,scale(y)
+		text s,10,scaley(y)
 
 	txt : (value, x, y, align=null, color=null) ->
 		push()

@@ -1,4 +1,4 @@
-import { g, range, print,scale } from './globals.js' 
+import { g, range, print,scalex,scaley } from './globals.js' 
 import { parseExpr } from './parser.js'
 import { Player } from './player.js'
 import { Edmonds } from './mattkrick.js' 
@@ -169,6 +169,10 @@ export class Tournament
 
 		print 'yyy',@persons
 
+		g.pages[g.NAMES].setLista()
+		g.pages[g.TABLES].setLista()
+		g.pages[g.STANDINGS].setLista()
+
 		@downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
 		start = new Date()
 		@downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
@@ -177,10 +181,7 @@ export class Tournament
 		# downloadFile @makeEdges(), "R#{@round} Net.txt"
 		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
 
-		g.pages[g.NAMES].setLista()
-		g.pages[g.TABLES].setLista()
 		@round += 1
-		g.pages[g.STANDINGS].setLista()
 
 		print 'lotta round', @round
 		g.state = g.TABLES
@@ -280,9 +281,9 @@ export class Tournament
 		header_after = " for " + @title + " after Round #{@round}    #{timestamp}"
 		header_in    = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 
-		if @round < @rounds then g.pages[g.STANDINGS].make header_after,res
-		if @round >= 0      then g.pages[g.NAMES].make header_in,players,res
-		if @round < @rounds then g.pages[g.TABLES].make header_in,res
+		if @round < @rounds then g.pages[g.STANDINGS].make res, header_after
+		if @round >= 0      then g.pages[g.NAMES].make     res, header_in,players
+		if @round < @rounds then g.pages[g.TABLES].make    res, header_in
 
 		res.join "\n"	
 

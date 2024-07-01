@@ -1,4 +1,4 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 
 export class Lista
 	constructor : (@objects=[], @columnTitles="", @buttons={}, @drawFunction=null) -> # a list of players. Or a list of pairs of players
@@ -11,7 +11,7 @@ export class Lista
 		y = 4
 		s = @columnTitles
 		textAlign window.LEFT
-		text s,10,scale(y)
+		text s,10,scaley(y)
 
 		fill 'black'
 		r = g.tournament.round - 1
@@ -22,15 +22,15 @@ export class Lista
 			s = @drawFunction p, iRow
 			if iRow == @currentRow
 				fill 'yellow'
-				w = if @paintYellowRow then width else scale(23.4)
-				rect 0, scale(y - 0.5), w, scale(1)
+				w = if @paintYellowRow then width else scaley(23.4)
+				rect 0, scaley(y - 0.5), w, scaley(1)
 				fill 'black'
-			text s,10, scale(y)
+			text s,10, scaley(y)
 
 	keyPressed : (event, key) -> @buttons[key].click()
 	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
 	mousePressed : -> 
-		if mouseY > scale(4)
+		if mouseY > scaley(4)
 			@currentRow = @offset + int mouseY / g.ZOOM[g.state] - 4.5
 		else
 			for key,button of @buttons

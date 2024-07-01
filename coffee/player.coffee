@@ -1,20 +1,18 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 
 export class Player
-	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> 
-		@active = true
-		# @t = g.tournament
+	constructor : (@id, @name="", @elo="1400", @opp=[], @col="", @res="") -> @active = true
 
-	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum().toFixed(0)}"
+	toString : -> "#{@id} #{@name} elo:#{@elo} #{@col} res:#{@res} opp:[#{@opp}] score:#{@score().toFixed(1)} eloSum:#{@eloSum(g.tournament.round).toFixed(0)}"
 
 	toggle : -> 
 		@active = not @active
 		g.tournament.paused = (p.id for p in g.tournament.persons when not p.active)
 
-	eloSum : => 
+	eloSum : (rounds) => 
 		if g.tournament.round == 0 then return 0
 		summa = 0
-		for r in range g.tournament.round # - 1
+		for r in range rounds
 			if @opp[r] != -1 then summa += g.tournament.persons[@opp[r]].elo * g.tournament.bonus[@col[r] + @res[r]] 
 		summa
 

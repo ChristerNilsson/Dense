@@ -20,8 +20,8 @@ g.tournament = null
 g.errors = [] # id för motsägelsefulla resultat. Tas bort med Delete
 
 g.pages = []
-resultat = [] # 012 sorterad på id
-message = '' #This is a tutorial g.tournament. Use it or edit the URL'
+# resultat = [] # 012 sorterad på id
+# message = '' #This is a tutorial g.tournament. Use it or edit the URL'
 
 window.windowResized = -> 
 	resizeCanvas windowWidth, windowHeight-4

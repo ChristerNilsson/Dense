@@ -1,4 +1,4 @@
-import { g,print,range,scale } from './globals.js' 
+import { g,print,range,scalex,scaley } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js' 
 import { Lista } from './lista.js' 
@@ -23,6 +23,7 @@ export class Active extends Page
 			() => @t.playersByName[g.pages[g.state].lista.currentRow].toggle()
 
 		@buttons.a.active = false
+		@buttons.a.help = @HELP
 		@setLista()
 
 	setLista : ->
