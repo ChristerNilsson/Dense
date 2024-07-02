@@ -11,7 +11,6 @@ export class Tournament
 		@sp = 0.0 # 0.01
 		@tpp = 30
 		@ppp = 60
-		@expl = 3
 
 		# dessa tre listor pekar på samma objekt
 		@players = []
@@ -148,8 +147,8 @@ export class Tournament
 
 		start = new Date()
 		net = @makeEdges @persons
-		print 'net',net
 		solution = @findSolution net
+		print 'cpu:',new Date() - start,'ms'
 		print 'solution', solution
 
 		missing = _.filter solution, (x) -> x==-1
@@ -163,7 +162,6 @@ export class Tournament
 
 		@pairs = @unscramble solution
 		print 'pairs',@pairs
-		print 'cpu:',new Date() - start
 
 		@postMatch()
 
@@ -174,12 +172,10 @@ export class Tournament
 		g.pages[g.STANDINGS].setLista()
 
 		@downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
-		start = new Date()
 		@downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
 
-		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt"
-		# downloadFile @makeEdges(), "R#{@round} Net.txt"
-		# downloadFile @makeStandings(), "R#{@round} Standings.txt"
+		# if @round > 0 then print @makeMatrix() # skriver till debug-fönstret, time outar inte.
+		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt" # (time outar, filen sparas inte)
 
 		@round += 1
 
@@ -197,13 +193,10 @@ export class Tournament
 		@datum = urlParams.get('DATE') or ""
 		@rounds = parseInt urlParams.get 'ROUNDS'
 		@round = parseInt urlParams.get 'ROUND'
-		@expl = parseInt getParam 'EXPL', 3
-		print 'expl',@expl
 		@first = getParam 'FIRST','bw' # Determines if first player has white or black in the first round
 		@sp = parseFloat getParam 'SP', 0.0 # ScorePoints
 		@tpp = parseInt getParam 'TPP',30 # Tables Per Page
 		@ppp = parseInt getParam 'PPP',60 # Players Per Page
-		# @downloads = getParam 'DOWNLOADS', 'NST' # Names Standings Tables  (URL is mandatory)
 
 		players = urlParams.get 'PLAYERS'
 		players = players.replaceAll ')(', ')|('
@@ -217,8 +210,8 @@ export class Tournament
 		if g.N < 4
 			print "Error: Number of players must be 4 or more!"
 			return
-		if g.N > 999
-			print "Error: Number of players must be 999 or less!"
+		if g.N > 1999
+			print "Error: Number of players must be 1999 or less!"
 			return
 		@persons = []
 		for i in range g.N
@@ -291,11 +284,11 @@ export class Tournament
 		result = []
 		for i in range(rounds.length) 
 			for [a,b] in rounds[i]
-				pa = tournament.persons[a]
-				pb = tournament.persons[b]
+				pa = @persons[a]
+				pb = @persons[b]
 				if pa.active and pb.active 
 					result.push abs(pa.elo-pb.elo) 
-		(sum(result)/result.length).toFixed 2
+		(g.sum(result)/result.length).toFixed 2
 
 	makeCanvas : ->
 		result = []
@@ -308,7 +301,7 @@ export class Tournament
 
 	dumpCanvas : (title,average,canvas) ->
 		output = ["", title]
-		output.push "Sparseness: #{average}  (Average Elo Difference) DIFF:#{DIFF} COST:#{COST} COLORS:#{COLORS} SP:#{@sp}"
+		output.push "Sparseness: #{average}  (Average Elo Difference) DIFF:#{g.DIFF} COST:#{g.COST} COLORS:#{g.COLORS} SP:#{@sp}"
 		output.push ""
 		header = (str((i + 1) % 10) for i in range(g.N)).join(' ')
 		output.push '     ' + header + '   Elo    AED'
@@ -325,8 +318,8 @@ export class Tournament
 		for i in range rounds.length
 			for [a,b] in rounds[i]
 				if @persons[a].active and @persons[b].active
-					canvas[a][b] = ALFABET[i]
-					canvas[b][a] = ALFABET[i]
+					canvas[a][b] = g.ALFABET[i]
+					canvas[b][a] = g.ALFABET[i]
 		@dumpCanvas title,@distans(rounds),canvas
 
 	makeMatrix : ->

@@ -6,10 +6,12 @@ export class Lista
 		@currentRow = 0
 		@N = @objects.length
 		@paintYellowRow = true
+		@errors = [] # list with index of erroneous rows
 
 	draw : -> # ritar de rader som syns i fönstret enbart
 		y = 4
 		s = @columnTitles
+		fill 'white'
 		textAlign window.LEFT
 		text s,10,scaley(y)
 
@@ -25,10 +27,13 @@ export class Lista
 				w = if @paintYellowRow then width else scaley(23.4)
 				rect 0, scaley(y - 0.5), w, scaley(1)
 				fill 'black'
+			fill if iRow in @errors then 'red' else 'black'
 			text s,10, scaley(y)
 
 	keyPressed : (event, key) -> @buttons[key].click()
-	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
+#	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
+	mouseWheel : (event) -> @move if event.delta < 0 then -1 else 1
+
 	mousePressed : -> 
 		if mouseY > scaley(4)
 			@currentRow = @offset + int mouseY / g.ZOOM[g.state] - 4.5

@@ -7,7 +7,6 @@ export class Tables extends Page
 
 	constructor : ->
 		super()
-		@errors = []
 
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.ACTIVE
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.NAMES
@@ -49,9 +48,9 @@ export class Tables extends Page
 			s += ' ' + g.txtT pb.elo.toString(), 4, window.RIGHT
 			s
 
+		@lista.errors = []
 		spread @buttons, 10, @y, @h
-
-		g.calcMissing()
+		@setActive()
 
 	mouseWheel   : (event )-> @lista.mouseWheel event
 	mousePressed : (event) -> @lista.mousePressed event
@@ -73,6 +72,10 @@ export class Tables extends Page
 		if x < loss + draw then index = 1
 		if x < loss then index = 0
 		index
+	
+	setActive : ->
+		@buttons.p.active = g.calcMissing()
+		if g.pages[g.ACTIVE] then g.pages[g.ACTIVE].buttons.p.active = @buttons.p.active
 
 	handleResult : (key) =>
 		[a,b] = @t.pairs[@lista.currentRow]
@@ -81,14 +84,12 @@ export class Tables extends Page
 		index = '0 1'.indexOf key
 		ch = "012"[index]
 		if pa.res.length == pa.col.length 
-			if ch != _.last pa.res
-				@errors.push @lista.currentRow
-				print 'errors',@errors
+			if ch != _.last pa.res then @lista.errors.push @lista.currentRow
 		else
 			if pa.res.length < pa.col.length then pa.res += "012"[index]
 			if pb.res.length < pb.col.length then pb.res += "210"[index]
-		g.calcMissing()
 		@lista.currentRow = (@lista.currentRow + 1) %% @t.pairs.length
+		@setActive()
 
 	randomResult : ->
 		for i in range @t.pairs.length
@@ -98,14 +99,14 @@ export class Tables extends Page
 			res = @elo_probabilities pa.elo, pb.elo
 			if pa.res.length < pa.col.length then pa.res += "012"[res] 
 			if pb.res.length < pb.col.length then pb.res += "210"[res]
-		g.calcMissing()
+		@setActive()
 
 	handleDelete : ->
 		i = @lista.currentRow
 		[a,b] = @t.pairs[i]
 		pa = @t.persons[a]
 		pb = @t.persons[b]
-		@errors = (e for e in @errors when e != i)
+		@lista.errors = (e for e in @lista.errors when e != i)
 		if pa.res.length == pb.res.length
 			[a,b] = @t.pairs[i]
 			pa = @t.persons[a]
@@ -113,7 +114,7 @@ export class Tables extends Page
 			pa.res = pa.res.substring 0,pa.res.length-1
 			pb.res = pb.res.substring 0,pb.res.length-1
 		@lista.currentRow = (@lista.currentRow + 1) %% @t.pairs.length
-		g.calcMissing()
+		@setActive()
 
 	make : (res,header) ->
 		res.push "TABLES" + header

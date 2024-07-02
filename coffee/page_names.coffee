@@ -23,12 +23,12 @@ export class Names extends Page
 	keyPressed   : (event) -> @buttons[key].click()
 
 	make : (res,header,players) ->
-		print 'make.@t.round',@t.round
+		#print 'make.@t.round',@t.round
 		res.push "NAMES" + header
 		res.push ""
 		r = @t.round
 		for [player,index],i in players			
-			print 'player,index',player,index
+			#print 'player,index',player,index
 			if i % @ppp == 0 then res.push "Table Name"
 			res.push "#{str(1 + index//2).padStart(3)} #{g.RINGS[player.col[r][0]]} #{player.name}"
 			if i % @ppp == @ppp-1 then res.push "\f"

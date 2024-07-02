@@ -9,19 +9,15 @@ import { Standings } from './page_standings.js'
 import { Active } from './page_active.js' 
 
 g.LPP = 14
-
 g.RINGS = {'b':'•', ' ':' ', 'w':'o'}
-
-ASCII = '0123456789abcdefg'
-ALFABET = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' # 62 ronder maximalt
+g.ASCII = '0123456789abcdefg'
+g.ALFABET = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' # 62 ronder maximalt
 
 datum = ''
+
 g.tournament = null
 g.errors = [] # id för motsägelsefulla resultat. Tas bort med Delete
-
 g.pages = []
-# resultat = [] # 012 sorterad på id
-# message = '' #This is a tutorial g.tournament. Use it or edit the URL'
 
 window.windowResized = -> 
 	resizeCanvas windowWidth, windowHeight-4

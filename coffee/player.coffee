@@ -21,7 +21,7 @@ export class Player
 		for id in @opp.slice 0, @opp.length - 1
 			#res.push abs normera(@elo) - normera(tournament.persons[id].elo)
 			if id != -1 then res.push abs @elo - g.tournament.persons[id].elo
-		if res.length == 0 then 0 else sum(res) / res.length
+		if res.length == 0 then 0 else g.sum(res) / res.length
 
 	balans : -> # färgbalans
 		result = 0

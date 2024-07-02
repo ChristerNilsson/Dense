@@ -47,7 +47,7 @@ assert "", g.res2string []
 
 g.zoomIn  = (n) -> g.ZOOM[g.state]++
 g.zoomOut = (n) -> g.ZOOM[g.state]--
-g.setState = (newState) -> g.state = newState
+g.setState = (newState) -> if g.tournament.round > 0 then g.state = newState
 
 g.invert = (arr) ->
 	res = []
@@ -91,6 +91,7 @@ g.calcMissing = ->
 	for p in g.tournament.persons
 		if p.active and p.res.length < p.col.length then missing++
 	g.message = "#{missing//2} results missing"
+	missing == 0
 
 g.sum = (s) ->
 	res = 0
