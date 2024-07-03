@@ -37,7 +37,7 @@ export class Tournament
 				if g.DIFF == 'ID'  then diff = abs pa.id - pb.id
 				if g.COST == 'LINEAR'    then cost = 2000 - diff
 				if g.COST == 'QUADRATIC' then cost = 2000 - diff ** 1.01
-				if g.ok pa,pb then edges.push [pa.id,pb.id,cost]
+				if g.ok pa,pb then edges.push [pa.id, pb.id, cost]
 		edges
 	
 	findSolution : (edges) -> 
@@ -142,8 +142,8 @@ export class Tournament
 
 		@preMatch()
 
-		print 'Lottning av rond ',@round
-		document.title = 'Round ' + (@round+1)
+		print "Lottning av rond #{@round}"
+		document.title = "Round #{@round+1}"
 
 		start = new Date()
 		net = @makeEdges @persons
