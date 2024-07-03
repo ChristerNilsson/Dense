@@ -10,10 +10,11 @@ export class Player
 		g.tournament.paused = (p.id for p in g.tournament.persons when not p.active)
 
 	eloSum : (rounds) => 
-		if g.tournament.round == 0 then return 0
+		#if g.tournament.round == 0 then return 0
 		summa = 0
+		if @name == 'BYE' then return 0
 		for r in range rounds
-			if @opp[r] != -1 then summa += g.tournament.persons[@opp[r]].elo * g.tournament.bonus[@col[r] + @res[r]] 
+			if @opp[r] != -1 then summa += g.tournament.persons[@opp[r]].elo * @res[r] / 2 # g.tournament.bonus[@col[r] + @res[r]] 
 		summa
 
 	avgEloDiff : ->
@@ -43,9 +44,6 @@ export class Player
 		result
 
 	read : (player) -> 
-		# (1234|Christer|(12w0|23b½|14w)) 
-		# (1234|Christer) 
-		# print 'read',player
 		@elo = parseInt player[0]
 		@name = player[1]
 		@opp = []
@@ -60,7 +58,7 @@ export class Player
 			@col += col
 			if arr.length == 2 and arr[1].length == 1
 				@res += {'0':'0', '½':'1', '1':'2'}[arr[1]]  
-		print @
+		# print 'Player.read',@
 
 	write : -> # (1234|Christer|(12w0|23b½|14w)) Elo:1234 Name:Christer opponent:23 color:b result:½
 		res = []

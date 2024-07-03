@@ -14,24 +14,31 @@ export class Standings extends Page
 
 	setLista : ->
 
-		rheader = _.map range(1,@t.rounds+1), (i) -> "#{i%10} "
+		rheader = _.map range(1,@t.round+1), (i) -> "#{i%10} "
 		rheader = rheader.join ' '
 		header = ""
 		header +=       g.txtT "Pos",          3,window.RIGHT
 		header += ' ' + g.txtT "Id",           3,window.RIGHT
 		header += ' ' + g.txtT "Elo",          4,window.RIGHT
 		header += ' ' + g.txtT "Name",        25,window.LEFT
-		header += ' ' + g.txtT rheader,3*@rounds,window.LEFT 
+		header += ' ' + g.txtT rheader,3*@round,window.LEFT 
 		header += ' ' + g.txtT "Elos",       8,window.RIGHT
 
+		#print 'standings.setLista:@t.round',@t.round
+		# for player in @t.persons
+		# 	print player.name,player.opp[@t.round-1], player.eloSum @t.round-1
+
+		# print (p.eloSum(@t.round) for p in @t.persons)
+
+		# print 'before sort',@t.round
 		@playersByEloSum = _.clone @t.persons.slice 0,g.N
-		@playersByEloSum.sort (a,b) => 
-			diff = b.eloSum(@t.round) - a.eloSum(@t.round)
-			if diff != 0 then return diff
-			return b.elo - a.elo
+		@playersByEloSum = _.sortBy @playersByEloSum, (p) => -p.eloSum(@t.round)
+
+		# print 'after sort'
+		print (p.eloSum(@t.round) for p in @playersByEloSum)
 
 		@lista = new Lista @playersByEloSum, header, @buttons, (p,index) => # returnera strängen som ska skrivas ut. Dessutom ritas lightbulbs här.
-			@y = (5 + index - @lista.offset) * g.ZOOM[g.state] 
+			@y_bulb = (5 + index - @lista.currentRow + g.LPP//2) * g.ZOOM[g.state] 
 			textAlign LEFT
 			fill 'black' 
 			s = ""
@@ -39,14 +46,14 @@ export class Standings extends Page
 			s += ' ' + g.txtT (1+p.id).toString(),    3, window.RIGHT
 			s += ' ' + g.txtT p.elo.toString(),       4, window.RIGHT
 			s += ' ' + g.txtT p.name,                25, window.LEFT
-			s += ' ' + g.txtT '',         3 * @t.rounds, window.CENTER
+			s += ' ' + g.txtT '',         3 * (@t.round-1), window.CENTER
 			s += ' ' + g.txtT p.eloSum(@t.round-1).toFixed(1),  7, window.RIGHT
 
-			for r in range g.tournament.round - 1
+			for r in range g.tournament.round #- 1
 				x = g.ZOOM[g.state] * (24.2 + 1.8*r)
 				if p.opp[r] == -1 then @txt "P", x, @y+1, window.CENTER, 'black'
 				else if p.opp[r] == g.N then @txt "BYE", x, @y+1, window.CENTER, 'black'
-				else @lightbulb p.col[r], x, @y, p.res.slice(r,r+1), 1 + p.opp[r]
+				else @lightbulb p.col[r], x, @y_bulb, p.res.slice(r,r+1), 1 + p.opp[r]
 			s
 		@lista.paintYellowRow = false
 		spread @buttons, 10, @y, @h
@@ -56,11 +63,13 @@ export class Standings extends Page
 	keyPressed   : (event) -> @buttons[key].click()
 
 	draw : ->
+		# print 'standings.draw'
 		fill 'white'
 		@showHeader @t.round-1
 		@lista.draw()
 		for key,button of @buttons
 			button.draw()
+			# print button.title,button.x,button.y,button.w,button.h
 
 	lightbulb : (color, x, y, result, opponent) ->
 		if result == "" then return

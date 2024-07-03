@@ -2,41 +2,43 @@ import { g,print,range,scalex,scaley } from './globals.js'
 
 export class Lista
 	constructor : (@objects=[], @columnTitles="", @buttons={}, @drawFunction=null) -> # a list of players. Or a list of pairs of players
-		@offset = 0
-		@currentRow = 0
+		#(g.LPP+10)//2 # den skall alltid visas i mitten
 		@N = @objects.length
 		@paintYellowRow = true
 		@errors = [] # list with index of erroneous rows
+		@currentRow = 0 
+		@PageDown()
 
 	draw : -> # ritar de rader som syns i fönstret enbart
-		y = 4
 		s = @columnTitles
 		fill 'white'
 		textAlign window.LEFT
-		text s,10,scaley(y)
+		text s,10,scaley(4)
 
+		y = (2 + g.LPP)//2 # mitten av skärmen
 		fill 'black'
 		r = g.tournament.round - 1
-		for iRow in range @offset,@offset + g.LPP
+		a = (1-g.LPP)//2
+		b = (1+g.LPP)//2
+		for delta in range a,b
+			iRow = @currentRow + delta
+			if iRow < 0 then continue
 			if iRow >= @N then continue
 			p = @objects[iRow]
-			y++
 			s = @drawFunction p, iRow
 			if iRow == @currentRow
 				fill 'yellow'
 				w = if @paintYellowRow then width else scaley(23.4)
-				rect 0, scaley(y - 0.5), w, scaley(1)
+				rect 0, scaley(y + 3.5), w, scaley(1)
 				fill 'black'
 			fill if iRow in @errors then 'red' else 'black'
-			text s,10, scaley(y)
+			text s,10, scaley(y + delta+4)
 
 	keyPressed : (event, key) -> @buttons[key].click()
-#	mouseWheel : (event) -> @move if event.delta < 0 then -g.LPP//2 else g.LPP//2
 	mouseWheel : (event) -> @move if event.delta < 0 then -1 else 1
-
 	mousePressed : -> 
 		if mouseY > scaley(4)
-			@currentRow = @offset + int mouseY / g.ZOOM[g.state] - 4.5
+			@move round mouseY / g.ZOOM[g.state] - g.LPP/2 - 4 - 1
 		else
 			for key,button of @buttons
 				if button.active and button.inside mouseX,mouseY then button.click()
@@ -52,6 +54,4 @@ export class Lista
 		@currentRow += delta
 		if @currentRow < 0 then @currentRow = 0
 		if @currentRow >= @N then @currentRow = @N-1
-		if @currentRow < @offset then @offset = @currentRow
-		if @currentRow >= @offset + g.LPP then @offset = @currentRow - g.LPP + 1
 		event.preventDefault()

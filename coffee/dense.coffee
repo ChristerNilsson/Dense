@@ -8,7 +8,7 @@ import { Names } from './page_names.js'
 import { Standings } from './page_standings.js' 
 import { Active } from './page_active.js' 
 
-g.LPP = 14
+# g.LPP = 14
 g.RINGS = {'b':'•', ' ':' ', 'w':'o'}
 g.ASCII = '0123456789abcdefg'
 g.ALFABET = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' # 62 ronder maximalt
@@ -33,12 +33,16 @@ window.setup = ->
 
 	g.ZOOM = [20,20,20,20] # vertical line distance for four states
 	g.state = g.TABLES
+	g.LPP = height // g.ZOOM[g.state] - 4
+
 	g.N = 0 # number of players
 	g.tournament = new Tournament()
 	g.state = g.ACTIVE
 
 	g.pages = [new Tables, new Names, new Standings, new Active]
 	print g.pages
+
+	g.tournament.fetchURL()
 
 	window.windowResized()
 

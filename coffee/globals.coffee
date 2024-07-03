@@ -11,7 +11,6 @@ export scaley = (y) -> y * g.ZOOM[g.state]
 
 export g = {}
 
-g.LPP = 14
 
 # parameters that somewhat affects matching
 g.COST = 'QUADRATIC' # QUADRATIC=1.01 or LINEAR=1
@@ -22,6 +21,8 @@ g.TABLES    = 0
 g.NAMES     = 1
 g.STANDINGS = 2
 g.ACTIVE    = 3
+
+g.pages = []
 
 g.message = ""
 

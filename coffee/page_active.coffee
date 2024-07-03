@@ -8,9 +8,10 @@ export class Active extends Page
 	constructor : ->
 		super()
 
-		@buttons.t.active = false
-		@buttons.n.active = false
-		@buttons.s.active = false
+		if g.tournament.round == 0
+			@buttons.t.active = false
+			@buttons.n.active = false
+			@buttons.s.active = false
 
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.STANDINGS
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.TABLES

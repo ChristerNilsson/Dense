@@ -3,10 +3,15 @@ import { parseExpr } from './parser.js'
 import { Player } from './player.js'
 import { Edmonds } from './mattkrick.js' 
 
+import { Tables } from './page_tables.js' 
+import { Names } from './page_names.js' 
+import { Standings } from './page_standings.js' 
+import { Active } from './page_active.js' 
+
 export class Tournament 
 	constructor : () ->
 		@title = ''
-		@rounds = 0
+		#@rounds = 0
 		@round = 0
 		@sp = 0.0 # 0.01
 		@tpp = 30
@@ -18,7 +23,7 @@ export class Tournament
 		@pairs = [] # varierar med varje rond
 
 		@robin = range g.N
-		@fetchURL()
+		# @fetchURL()
 		@mat = []
 
 		@bonus = {'w2': 1, 'b2': 1+2*@sp, 'w1': 0.5-@sp, 'b1': 0.5+@sp, 'w0': 0, 'b0': 0}
@@ -27,10 +32,10 @@ export class Tournament
 
 	makeEdges : ->
 		edges = []
-		for a in range g.N + 1  # tag med frironden
+		for a in range g.N  # tag med frironden
 			pa = @persons[a]
 			if not pa.active then continue
-			for b in range a+1,g.N+1
+			for b in range a+1,g.N
 				pb = @persons[b]
 				if not pb.active then continue
 				if g.DIFF == 'ELO' then diff = abs pa.elo - pb.elo
@@ -76,7 +81,7 @@ export class Tournament
 			if p.res.length < p.col.length then p.res += '0'
 
 		active = _.filter @persons.slice(0,@persons.length-1), (p) -> p.active
-		@persons[g.N].active = active.length % 2 == 1
+		# @persons[g.N].active = active.length % 2 == 1
 
 	postMatch : ->
 		for p in @persons
@@ -91,7 +96,7 @@ export class Tournament
 			pa.opp.push pb.id
 			pb.opp.push pa.id
 
-		print @persons
+		# print @persons
 
 		if @round == 0
 			for i in range @pairs.length
@@ -165,7 +170,7 @@ export class Tournament
 
 		@postMatch()
 
-		print 'yyy',@persons
+		# print 'yyy',@persons
 
 		g.pages[g.NAMES].setLista()
 		g.pages[g.TABLES].setLista()
@@ -191,7 +196,7 @@ export class Tournament
 		@players = []
 		@title = urlParams.get('TOUR').replaceAll '_',' '
 		@datum = urlParams.get('DATE') or ""
-		@rounds = parseInt urlParams.get 'ROUNDS'
+		#@rounds = parseInt urlParams.get 'ROUNDS'
 		@round = parseInt urlParams.get 'ROUND'
 		@first = getParam 'FIRST','bw' # Determines if first player has white or black in the first round
 		@sp = parseFloat getParam 'SP', 0.0 # ScorePoints
@@ -203,20 +208,24 @@ export class Tournament
 		players = players.replaceAll '_',' '
 		players = '(' + players + ')'
 		players = parseExpr players
-		print 'players',players
+		print 'fetchURL.players',players
 
 		g.N = players.length
 
 		if g.N < 4
 			print "Error: Number of players must be 4 or more!"
 			return
-		if g.N > 1999
+		if g.N > 999
 			print "Error: Number of players must be 1999 or less!"
 			return
+
+		# g.N-- # pga BYE
+
 		@persons = []
 		for i in range g.N
 			player = new Player i
 			player.read players[i]
+			# print 'fetchURL.player',player
 			@persons.push player
 
 		@paused = getParam 'PAUSED','()' # list of zero based ids
@@ -224,10 +233,13 @@ export class Tournament
 		for id in @paused
 			@persons[id].active = false
 
-		print @persons
+		print 'fetchURL.persons', @persons
 		
-		@persons = _.sortBy @persons, (player) -> player.elo
-		@persons = @persons.reverse()
+		@persons.sort (a,b) -> 
+			if a.elo != b.elo then return b.elo - a.elo
+			if a.name > b.name then 1 else -1
+		# @persons = @persons.reverse()
+
 		XMAX = @persons[0].elo
 		XMIN = _.last(@persons).elo
 		for i in range g.N
@@ -236,10 +248,36 @@ export class Tournament
 		print (p.elo for p in @persons)
 		print 'sorted players', @persons # by id AND descending elo
 
-		if @round == 0 then @persons.push new Player g.N, 'BYE', 0 # Frirond ska ALLTID finnas, men kanske vara inaktiv
+		# if @round == 0 then @persons.push new Player g.N, 'BYE', 0 # Frirond ska ALLTID finnas, men kanske vara inaktiv
 
-		@playersByName = _.sortBy @persons.slice(0, @persons.length-1), (player) -> player.name
+		# @playersByName = _.sortBy @persons.slice(0, @persons.length-1), (player) -> player.name
+		@playersByName = _.sortBy @persons, (player) -> player.name
 		print 'playersByName', (p.name for p in @playersByName)
+
+		# extract @pairs from the last round
+		@pairs = []
+		for p in @persons
+			a = p.id
+			b = _.last p.opp
+			if a < b 
+				pa = @persons[a]
+				pb = @persons[b]
+				@pairs.push if 'w' == _.last p.col
+					pa.chair = 2 * @pairs.length
+					pb.chair = 2 * @pairs.length + 1
+					[a,b]
+				else 
+					pa.chair = 2 * @pairs.length + 1
+					pb.chair = 2 * @pairs.length
+					[b,a]
+
+		print '@pairs',@pairs
+
+		g.pages = [new Tables, new Names, new Standings, new Active]
+
+		g.pages[g.NAMES].setLista()
+		g.pages[g.TABLES].setLista()
+		g.pages[g.STANDINGS].setLista()
 
 	makeURL : ->
 		res = []
@@ -247,7 +285,7 @@ export class Tournament
 		res.push "http://127.0.0.1:5500"
 		res.push "?TOUR=" + @title.replaceAll ' ','_'
 		res.push "&DATE=" + "2023-11-25"
-		res.push "&ROUNDS=" + @rounds
+		#res.push "&ROUNDS=" + @rounds
 		res.push "&ROUND=" + @round
 		res.push "&PLAYERS=" 
 		
@@ -274,9 +312,9 @@ export class Tournament
 		header_after = " for " + @title + " after Round #{@round}    #{timestamp}"
 		header_in    = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 
-		if @round < @rounds then g.pages[g.STANDINGS].make res, header_after
-		if @round >= 0      then g.pages[g.NAMES].make     res, header_in,players
-		if @round < @rounds then g.pages[g.TABLES].make    res, header_in
+		if @round < 999 then g.pages[g.STANDINGS].make res, header_after
+		if @round >= 0  then g.pages[g.NAMES].make     res, header_in,players
+		if @round < 999 then g.pages[g.TABLES].make    res, header_in
 
 		res.join "\n"	
 

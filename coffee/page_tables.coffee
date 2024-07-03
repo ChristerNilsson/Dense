@@ -12,18 +12,18 @@ export class Tables extends Page
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.NAMES
 
 		@buttons.p      = new Button 'Pair','P = Perform pairing now',   () => @t.lotta()
-		@buttons.K1     = new Button '1',      '1 = White Win',          () => @handleResult '1'
-		@buttons[' ']   = new Button '½',      'space = Draw',           () => @handleResult ' '
 		@buttons.K0     = new Button '0',      '0 = White Loss',         () => @handleResult '0'
+		@buttons[' ']   = new Button '½',      'space = Draw',           () => @handleResult ' '
+		@buttons.K1     = new Button '1',      '1 = White Win',          () => @handleResult '1'
 		@buttons.Delete = new Button 'Delete', 'delete = Remove result', () => @handleDelete()
 		@buttons.r      = new Button 'Random', 'R = Random results',     () => @randomResult()
 
 		@buttons.t.active = false
 
-		@setLista()
+		# @setLista()
 
 	setLista : =>
-		print 'Lista', @t.pairs.length
+		# print 'Lista', g.tournament.pairs.length
 		header = ""
 		header +=       g.txtT 'Tbl',    3,window.RIGHT
 		header += ' ' + g.txtT 'Elo',    4,window.RIGHT
