@@ -1,4 +1,4 @@
-import { g, range, print,scalex,scaley } from './globals.js' 
+import { g, range, print, scalex, scaley } from './globals.js' 
 import { parseExpr } from './parser.js'
 import { Player } from './player.js'
 import { Edmonds } from './mattkrick.js' 
@@ -170,14 +170,14 @@ export class Tournament
 
 		@postMatch()
 
-		# print 'yyy',@persons
-
 		g.pages[g.NAMES].setLista()
 		g.pages[g.TABLES].setLista()
 		g.pages[g.STANDINGS].setLista()
 
-		@downloadFile @makeURL(), "#{@title} R#{@round} URL.txt"
-		@downloadFile @makeStandardFile(), "#{@title} R#{@round}.txt"
+		timestamp = new Date().toLocaleString('se-SE').replaceAll ' ','_'
+
+		@downloadFile @makeURL(timestamp), "#{timestamp}-#{@round} URL.txt"
+		@downloadFile @makeStandardFile(), "#{timestamp}-#{@round}.txt"
 
 		# if @round > 0 then print @makeMatrix() # skriver till debug-fönstret, time outar inte.
 		# if @round > 0 then downloadFile @makeMatrix(), "#{@title} R#{@round} Matrix.txt" # (time outar, filen sparas inte)
@@ -279,12 +279,12 @@ export class Tournament
 		g.pages[g.TABLES].setLista()
 		g.pages[g.STANDINGS].setLista()
 
-	makeURL : ->
+	makeURL : (timestamp) ->
 		res = []
 		#res.push "https://christernilsson.github.io/Dense"
 		res.push "http://127.0.0.1:5500"
 		res.push "?TOUR=" + @title.replaceAll ' ','_'
-		res.push "&DATE=" + "2023-11-25"
+		res.push "&TIMESTAMP=" + timestamp
 		#res.push "&ROUNDS=" + @rounds
 		res.push "&ROUND=" + @round
 		res.push "&PLAYERS=" 
@@ -308,7 +308,8 @@ export class Tournament
 			players.push [pb,2*i+1]
 		players = _.sortBy players, (p) -> p[0].name
 
-		timestamp = new Date().toLocaleString('se-SE').slice 0,16
+		timestamp = new Date().toLocaleString('se-SE') #.slice 0,16
+		print timestamp
 		header_after = " for " + @title + " after Round #{@round}    #{timestamp}"
 		header_in    = " for " + @title + " in Round #{@round+1}    #{timestamp}"
 

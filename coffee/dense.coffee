@@ -19,6 +19,10 @@ g.tournament = null
 g.errors = [] # id för motsägelsefulla resultat. Tas bort med Delete
 g.pages = []
 
+timestamp = new Date().toLocaleString('se-SE') #.slice 0,16
+print timestamp
+
+
 window.windowResized = -> 
 	resizeCanvas windowWidth, windowHeight-4
 	g.LPP = height // g.ZOOM[g.state] - 4
