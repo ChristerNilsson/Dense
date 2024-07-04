@@ -11,6 +11,8 @@ export scaley = (y) -> y * g.ZOOM[g.state]
 
 export g = {}
 
+g.seed = 0
+export random = -> (((Math.sin(g.seed++)/2+0.5)*10000)%100)/100
 
 # parameters that somewhat affects matching
 g.COST = 'QUADRATIC' # QUADRATIC=1.01 or LINEAR=1

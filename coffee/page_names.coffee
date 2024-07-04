@@ -9,7 +9,7 @@ export class Names extends Page
 		super()
 		@buttons.n.active = false
 		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.TABLES
-		@buttons.ArrowRight = new Button '', '', () => g.setState g.STANDINGS
+		@buttons.ArrowRight = new Button '', '', () => g.setState g.ACTIVE
 
 	setLista : ->
 		@lista = new Lista @t.playersByName, "Table Name", @buttons, (p) =>

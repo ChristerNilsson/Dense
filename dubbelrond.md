@@ -2,10 +2,9 @@
 
 * Färghantering försvinner helt
 * Bonus för svart vinst eller remi försvinner
-* Hellre dubbelrond med färre spelare än enkelrond med fler spelare
 * Bättre parning
-    * Spelarna matchar alltid varandra
-    * Färre spelare => Tätare matris
+    * Inga mismatch pga färg
+    * Färre ronder => Tätare matris
 
 # Kod som försvinner
 * balans
@@ -16,11 +15,11 @@
 * RINGS
 
 # 5 olika resultat
-* 2-0    Vit   key=2
-* 1½-½   Grön  key=q
-* 1-1    Gul   key=1
-* ½-1½   Röd   key=space
-* 0-2    Svart key=0
+* 2-0      key=2
+* 1½-½     key=q
+* 1-1      key=1
+* ½-1½     key=space
+* 0-2      key=0
 * Alternativ
     * 4-0
     * 3-1

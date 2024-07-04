@@ -1,4 +1,4 @@
-import { g,print,range,scalex,scaley } from './globals.js' 
+import { g,print,range,scalex,scaley,random } from './globals.js' 
 import { Page } from './page.js' 
 import { Button,spread } from './button.js'  
 import { Lista } from './lista.js' 
@@ -8,7 +8,7 @@ export class Tables extends Page
 	constructor : ->
 		super()
 
-		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.ACTIVE
+		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.STANDINGS
 		@buttons.ArrowRight = new Button '', '', () => g.setState g.NAMES
 
 		@buttons.p      = new Button 'Pair','P = Perform pairing now',   () => @t.lotta()
@@ -67,7 +67,7 @@ export class Tables extends Page
 		E_W = 1 / (1 + 10 ** ((R_B - R_W) / 400))
 		win = E_W - draw / 2
 		loss = (1 - E_W) - draw / 2
-		x = _.random 0,1,true
+		x = random()
 		index = 2
 		if x < loss + draw then index = 1
 		if x < loss then index = 0

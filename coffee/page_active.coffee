@@ -13,8 +13,8 @@ export class Active extends Page
 			@buttons.n.active = false
 			@buttons.s.active = false
 
-		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.STANDINGS
-		@buttons.ArrowRight = new Button '', '', () => g.setState g.TABLES
+		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.NAMES
+		@buttons.ArrowRight = new Button '', '', () => g.setState g.STANDINGS
 		@buttons.p          = new Button 'Pair','P = Perform pairing now', () => 
 			@buttons.t.active = true
 			@buttons.n.active = true

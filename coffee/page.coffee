@@ -9,10 +9,10 @@ export class Page
 		@HELP = "Available keys: Up Down Left Right PgUp PgDn Home End a i n o p r s t 1 Space 0 Delete"
 		@buttons = {}
 
-		@buttons.t = new Button 'Tables', 'T = Tables',       () => g.setState g.TABLES
-		@buttons.n = new Button 'Names',  'N = Names',        () => g.setState g.NAMES
 		@buttons.s = new Button 'Standings', 'S = Standings', () => g.setState g.STANDINGS
-		@buttons.a = new Button 'Active',  'A = Active',      () => g.setState g.ACTIVE
+		@buttons.t = new Button 'Tables',    'T = Tables',    () => g.setState g.TABLES
+		@buttons.n = new Button 'Names',     'N = Names',     () => g.setState g.NAMES
+		@buttons.a = new Button 'Active',    'A = Active',    () => g.setState g.ACTIVE
 
 		@buttons.ArrowUp = new Button '', '', () => @lista.ArrowUp()
 		@buttons.ArrowDown = new Button '','', () => @lista.ArrowDown()

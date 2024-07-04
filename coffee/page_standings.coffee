@@ -8,8 +8,8 @@ export class Standings extends Page
 	constructor : ->
 		super()
 		@t = g.tournament
-		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.NAMES
-		@buttons.ArrowRight = new Button '', '', () => g.setState g.ACTIVE
+		@buttons.ArrowLeft  = new Button '', '', () => g.setState g.ACTIVE
+		@buttons.ArrowRight = new Button '', '', () => g.setState g.TABLES
 		@buttons.s.active = false
 
 	setLista : ->
